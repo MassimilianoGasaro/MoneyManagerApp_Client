@@ -12,14 +12,24 @@
 
     <!-- Main -->
     <main>
-        <h1>Gestione Spese</h1>
-        <p>Benvenuto nella tua applicazione di gestione delle spese!</p>
-        <p>Qui puoi tenere traccia delle tue spese quotidiane e gestire il tuo budget in modo efficace.</p>
-        <p>Per iniziare, visita la sezione "Spese" dal menu principale.</p>
+        <button class="btn add-btn">Aggiungi Record</button>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Descrizione</th>
+                    <th>Valore</th>
+                    <th>Data</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- popolato dinamicamente -->
+            </tbody>
+        </table>
     </main>
 
     <!-- Footer -->
     <div id="footer"></div>
-    <script src="js/main.js" defer></script>
+    <script src="js/main.js" type="module" defer></script>
 </body>
 </html>

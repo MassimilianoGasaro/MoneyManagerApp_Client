@@ -1,2 +1,62 @@
 @import url("global.css");
 @import url("variables.css");
+
+main {
+    background-color: var(--background-body);
+    color: var(--text-color);
+    padding: 20px;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 1rem;
+    text-align: left;
+}
+
+.styled-table thead tr {
+    background-color: #007bff;
+    color: white;
+}
+
+.styled-table th, .styled-table td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+}
+
+.styled-table tbody tr:nth-child(even) {
+    background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:hover {
+    background-color: #e0e0e0;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.edit-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.add-btn {
+    background-color: #007bff;
+    color: white;
+    margin-top: 1rem;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
