@@ -1,0 +1,13 @@
+@import url("global.css");
+@import url("variables.css");
+
+footer {
+    background-color: var(--background-footer);
+    color: var(--text-color);
+    text-align: center;
+}
+
+footer p {
+    display: inline-block;
+    padding: 0 0.5rem;
+}
