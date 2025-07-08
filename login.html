@@ -3,32 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/login.css">
-    <title>Gestione Spese</title>
+    <link rel="stylesheet" href="css/main.css">
+    <title>Login - Gestione Spese</title>
 </head>
 <body>
-
     <!-- Header -->
     <div id="header"></div>
 
     <!-- Main -->
     <main>
-        <h2>Login</h2>
-        <form id="login-form">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-
-            <button type="submit">Login</button>
-        </form>
+        <div class="login-container">
+            <h2>Accedi</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn login-btn">Accedi</button>
+                <div id="error-message" class="error"></div>
+            </form>
+        </div>
     </main>
 
     <!-- Footer -->
     <div id="footer"></div>
     
-    <script src="js/main.js" type="module" defer></script>
-    
+    <!-- IMPORTANTE: Carica login.js invece di main.js -->
+    <script src="js/login.js" type="module" defer></script>
 </body>
 </html>
