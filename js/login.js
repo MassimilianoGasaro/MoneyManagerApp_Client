@@ -6,14 +6,24 @@ async function handleLogin(event) {
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+
+    // {
+    // "email": "massi@test.com",
+    // "password": "Test123!!"
+    // }
     
     try {
+        const body = {
+            email: username,
+            password: password
+        }
+        
         const response = await fetch('http://localhost:3001/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify(body)
         });
         
         if (response.ok) {
@@ -23,6 +33,7 @@ async function handleLogin(event) {
         } else {
             document.getElementById('error-message').textContent = 'Credenziali non valide';
         }
+
     } catch (error) {
         console.error('Errore durante il login:', error);
         document.getElementById('error-message').textContent = 'Errore di connessione';

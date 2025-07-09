@@ -1,3 +1,6 @@
+function isEmptyOrNull(input) {
+  return input === null || input === undefined || input.trim() === '';
+}
 // per caricare header e footer in modo dinamico
 export function getHeaderAndFooter() {
 Promise.all([
@@ -10,16 +13,18 @@ Promise.all([
 
       // Header
       function isAuth() {
-        // simulazione di controllo auth
-        return false;
-        //return localStorage.getItem('auth') === 'true';
+        return !isEmptyOrNull(localStorage.getItem('authToken'));
       }
 
       const login = document.getElementById("login");
       if (login) {
           if (isAuth()) {
               login.textContent = "Logout";
-              login.href = "#"; 
+              login.href = "#";
+              login.addEventListener("click", () => {
+                  localStorage.removeItem('authToken');
+                  window.location.href = "home.html"; 
+              }); 
           } else {
               login.textContent = "Accedi";
               login.href = "login.html"; 
