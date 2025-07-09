@@ -23,7 +23,7 @@ Promise.all([
               login.href = "#";
               login.addEventListener("click", () => {
                   localStorage.removeItem('authToken');
-                  window.location.href = "home.html"; 
+                  window.location.href = "index.html"; 
               }); 
           } else {
               login.textContent = "Accedi";

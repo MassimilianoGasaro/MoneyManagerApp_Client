@@ -29,7 +29,7 @@ async function handleLogin(event) {
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('authToken', data.token);
-            window.location.href = 'index.html';
+            window.location.href = 'dashboard.html';
         } else {
             document.getElementById('error-message').textContent = 'Credenziali non valide';
         }
