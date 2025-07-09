@@ -1,4 +1,5 @@
 import { getHeaderAndFooter } from "./import.js";
+import { DraggablePopup } from './popup.js';
 
 // Funzioni AJAX per le chiamate HTTP
 async function fetchRecords() {
@@ -34,6 +35,15 @@ function populateTable(records) {
     });
 }
 
+// Funzione per aprire il popup per aggiungere un nuovo record
+function openPopup() {
+    console.log('Apertura del popup per aggiungere un nuovo record');
+    const popup = new DraggablePopup('registerPopup');
+
+    // Apri il popup
+    popup.open();
+}
+
 // Funzione per caricare i dati
 async function loadData() {
     const records = await fetchRecords();
@@ -47,6 +57,12 @@ async function init() {
     
     // Carica i dati dalla API
     await loadData();
+
+    // Aggiungi evento per il pulsante "Aggiungi Record"
+    const addRecordBtn = document.querySelector('.add-btn');
+    if (addRecordBtn) addRecordBtn.addEventListener('click', openPopup);
+    else console.error('Pulsante "Aggiungi Record" non trovato.');
+    
 }
 
 // Avvia l'applicazione quando il DOM è pronto
