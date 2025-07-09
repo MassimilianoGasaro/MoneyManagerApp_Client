@@ -1,5 +1,6 @@
 @import url("global.css");
 @import url("variables.css");
+@import url("toast.css");
 
 main {
     background-color: var(--background-body);

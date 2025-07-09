@@ -1,7 +1,10 @@
 import { getHeaderAndFooter } from "./import.js";
+import usersFunctions from "./usersFunction.js";
+import toast from "./toast.js";
 
 // Funzione per gestire il login
 async function handleLogin(event) {
+    console.log('handled submit', event);
     event.preventDefault();
     
     const username = document.getElementById('username').value;
@@ -18,25 +21,23 @@ async function handleLogin(event) {
             password: password
         }
         
-        const response = await fetch('http://localhost:3001/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-        
+        const response = await usersFunctions.login(body);
+
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('authToken', data.token);
-            window.location.href = 'dashboard.html';
+            toast.success('Login effettuato con successo!');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
         } else {
-            document.getElementById('error-message').textContent = 'Credenziali non valide';
+            const errorData = await response.json();
+            toast.error(errorData.message || 'Credenziali non valide');
         }
 
     } catch (error) {
         console.error('Errore durante il login:', error);
-        document.getElementById('error-message').textContent = 'Errore di connessione';
+        toast.error('Errore di connessione al server');
     }
 }
 
