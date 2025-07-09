@@ -17,6 +17,8 @@ Promise.all([
       }
 
       const login = document.getElementById("login");
+      const dashboard = document.getElementById("dashboard");
+      const reports = document.getElementById("reports");
       if (login) {
           if (isAuth()) {
               login.textContent = "Logout";
@@ -25,9 +27,15 @@ Promise.all([
                   localStorage.removeItem('authToken');
                   window.location.href = "index.html"; 
               }); 
+
+              dashboard.style.display = "inline-block";
+              reports.style.display = "inline-block";
           } else {
               login.textContent = "Accedi";
-              login.href = "login.html"; 
+              login.href = "login.html";
+              
+              dashboard.style.display = "none";
+              reports.style.display = "none";
           }
       }
       
