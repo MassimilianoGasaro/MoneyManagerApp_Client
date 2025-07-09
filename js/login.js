@@ -4,20 +4,14 @@ import toast from "./toast.js";
 
 // Funzione per gestire il login
 async function handleLogin(event) {
-    console.log('handled submit', event);
     event.preventDefault();
     
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    // {
-    // "email": "massi@test.com",
-    // "password": "Test123!!"
-    // }
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
     
     try {
         const body = {
-            email: username,
+            email: email,
             password: password
         }
         
@@ -41,16 +35,86 @@ async function handleLogin(event) {
     }
 }
 
+// Funzione per gestire la registrazione
+async function handleRegister(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('register-name').value;
+    const surname = document.getElementById('register-surname').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    
+    try {
+        const body = {
+            email: email,
+            password: password,
+            name: name,
+            surname: surname
+        }
+
+        // {
+        //     email: "massi@test.com",
+        //     password: "Test123!!",
+        //     name: "max",
+        //     surname: "gasaro"
+        // }
+        
+        const response = await usersFunctions.register(body);
+
+        if (response.ok) {
+            toast.success('Registrazione completata con successo!');
+            // Cambia automaticamente al tab di login
+            switchTab('login');
+        } else {
+            const errorData = await response.json();
+            toast.error(errorData.message || 'Errore durante la registrazione');
+        }
+
+    } catch (error) {
+        console.error('Errore durante la registrazione:', error);
+        toast.error('Errore di connessione al server');
+    }
+}
+
+// Funzione per cambiare tab
+function switchTab(tabName) {
+    // Rimuovi classe active da tutti i tab button
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Rimuovi classe active da tutti i tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Aggiungi classe active al tab selezionato
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+}
+
 // Inizializzazione della pagina login
 function initLogin() {
     // Carica header e footer
     getHeaderAndFooter();
     
-    // Aggiungi event listener al form
+    // Aggiungi event listener ai form
     const loginForm = document.getElementById('login-form');
-    if (loginForm) {
+    const registerForm = document.getElementById('register-form');
+    
+    if (loginForm) 
         loginForm.addEventListener('submit', handleLogin);
-    }
+    
+    if (registerForm) 
+        registerForm.addEventListener('submit', handleRegister);
+    
+    // Aggiungi event listener ai tab
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tabName = e.target.dataset.tab;
+            switchTab(tabName);
+        });
+    });
 }
 
 // Avvia l'applicazione quando il DOM è pronto
