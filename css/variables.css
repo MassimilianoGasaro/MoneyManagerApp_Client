@@ -7,4 +7,8 @@
     --background-header: #f8f9fa;
     --background-body: #ffffff;
     --background-footer: #f1f1f1;
+    --border-color: #ddd;
+    --border-focus-color: #007bff;
+    --option-hover-color: #f8f9fa;
+    --option-selected-color: #e3f2fd;
 }

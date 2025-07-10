@@ -39,6 +39,8 @@
 
 .popup-content {
     padding: 20px;
+    position: relative;
+    min-height: 300px; /* Altezza minima per il bottone in basso */
 }
 
 .close-btn {
