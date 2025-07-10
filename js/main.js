@@ -1,14 +1,17 @@
 import { getHeaderAndFooter } from "./import.js";
 import { DraggablePopup } from './popup.js';
+import { getListByUser } from './expensesFunction.js';
+import toast from "./toast.js";
 
 // Funzioni AJAX per le chiamate HTTP
 async function fetchRecords() {
     try {
-        const response = await fetch('http://localhost:3001/test/activities');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await getListByUser();
+        if (!response.success) {
+            toast.error("Errore nel recupero dei dati: " + response.message);
+            throw new Error(`HTTP error! status: ${response.success}`);
         }
-        return await response.json();
+        return response.data;
     } catch (error) {
         console.error('Errore nel fetch dei record:', error);
         return [];
@@ -44,10 +47,12 @@ function openPopup() {
     popup.open();
 }
 
+// Funzione per salvati i dati e chiudere il popup
+
 // Funzione per caricare i dati
 async function loadData() {
     const records = await fetchRecords();
-    populateTable(records.activities);
+    populateTable(records);
 }
 
 // Inizializzazione dell'applicazione

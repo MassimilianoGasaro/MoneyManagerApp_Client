@@ -17,15 +17,12 @@ async function handleLogin(event) {
         
         const response = await usersFunctions.login(body);
 
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('authToken', data.token);
+        if (response.success) {
             toast.success('Login effettuato con successo!');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } else {
-            const errorData = await response.json();
             toast.error(errorData.message || 'Credenziali non valide');
         }
 
