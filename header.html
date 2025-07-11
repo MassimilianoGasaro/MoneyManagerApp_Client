@@ -12,12 +12,50 @@
         <nav>
             <ul class="nav-links">
                 <li><a href="index.html">Home</a></li>
-                <li id="dashboard"><a href="dashboard.html">Expenses</a></li>
-                <li id="reports"><a href="reports.html">Reports</a></li>
+                <li id="dashboard" class="protected-route"><a href="dashboard.html">Expenses</a></li>
+                <li id="reports" class="protected-route"><a href="reports.html">Reports</a></li>
                 <li><a id="login" href="#"></a></li>
             </ul>
         </nav>
     </header>
+
+    <script type="module">
+        // Gestione dell'autenticazione nell'header
+        function updateAuthUI() {
+            const token = localStorage.getItem('authToken');
+            const loginLink = document.getElementById('login');
+            const protectedRoutes = document.querySelectorAll('.protected-route');
+            
+            if (token) {
+                // Utente autenticato
+                loginLink.textContent = 'Logout';
+                loginLink.href = '#';
+                loginLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user_id');
+                    window.location.href = 'login.html';
+                });
+                
+                // Mostra le rotte protette
+                protectedRoutes.forEach(route => {
+                    route.style.display = 'block';
+                });
+            } else {
+                // Utente non autenticato
+                loginLink.textContent = 'Login';
+                loginLink.href = 'login.html';
+                
+                // Nascondi le rotte protette
+                protectedRoutes.forEach(route => {
+                    route.style.display = 'none';
+                });
+            }
+        }
+
+        // Aggiorna UI quando la pagina si carica
+        document.addEventListener('DOMContentLoaded', updateAuthUI);
+    </script>
 
 </body>
 </html>

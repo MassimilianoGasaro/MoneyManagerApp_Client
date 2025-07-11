@@ -119,3 +119,29 @@
         max-width: none;
     }
 }
+
+/* Stili per le rotte protette */
+.protected-route {
+    display: none; /* Nascoste per default */
+}
+
+.protected-route.authenticated {
+    display: block; /* Visibili quando autenticato */
+}
+
+/* Stili per il messaggio di caricamento */
+.loading-message {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+/* Stili per errori di autenticazione */
+.auth-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    border: 1px solid #f5c6cb;
+}

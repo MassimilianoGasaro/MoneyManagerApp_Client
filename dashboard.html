@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/main.css">
     <title>Gestione Spese</title>
+    <!-- Route Guard Script -->
+    <script type="module">
+        import { initRouteGuard } from './js/route-guard.js';
+        
+        // Controlla l'autenticazione prima di caricare la pagina
+        if (!initRouteGuard()) {
+            // Se l'autenticazione fallisce, lo script si ferma qui
+            throw new Error('Accesso negato');
+        }
+    </script>
 </head>
 <body>
     <!-- Header -->

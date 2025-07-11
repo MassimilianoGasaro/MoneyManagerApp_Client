@@ -2,6 +2,7 @@ import { getHeaderAndFooter } from "./import.js";
 import { DraggablePopup } from './popup.js';
 import { getListByUser } from './expensesFunction.js';
 import toast from "./toast.js";
+import authManager from "./auth.js";
 
 // Funzioni AJAX per le chiamate HTTP
 async function fetchRecords() {
