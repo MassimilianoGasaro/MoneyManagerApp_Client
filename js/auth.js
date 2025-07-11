@@ -1,3 +1,5 @@
+import toast from "./toast.js";
+
 // Sistema di autenticazione per proteggere le rotte
 class AuthManager {
     constructor() {
@@ -52,6 +54,7 @@ class AuthManager {
         // Se non è autenticato e sta cercando di accedere a una rotta protetta
         if (!isAuth && !isPublic) {
             console.log('Accesso negato: token non valido');
+            toast.error('Accesso negato: token non valido');
             this.redirectToLogin();
             return false;
         }
