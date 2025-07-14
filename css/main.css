@@ -62,9 +62,152 @@ main {
 .btn:hover {
     opacity: 0.9;
 }
+
+/* Stili per button disabilitato */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn:disabled:hover {
+    opacity: 0.6; /* Mantiene l'opacità anche in hover */
+}
 /* fine table style */
 
-/* inizio popup style */
+/* inizio popup update style */
+#update-form .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+#update-form .form-group input {
+    margin-bottom: 0.3rem;
+    color: var(--text-color);
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    background: transparent;
+    outline: none;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+    transition: border-bottom-color 0.3s ease;
+}
+
+#update-form .form-group input:focus {
+    border-bottom-color: var(--border-focus-color);
+}
+
+#update-form .form-group select {
+    margin-bottom: 0.3rem;
+    color: var(--text-color);
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    background: transparent;
+    outline: none;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+    transition: border-bottom-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    appearance: none; /* Rimuove lo stile default del browser */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1rem;
+    padding-right: 2rem; /* Spazio per la freccia */
+    min-height: 2.5rem;
+}
+
+#update-form .form-group select:focus {
+    border-bottom-color: var(--border-focus-color);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+#update-form .form-group select:hover {
+    border-bottom-color: var(--primary-color);
+    opacity: 0.8;
+}
+
+#update-form .form-group select option {
+    padding: 12px 16px;
+    margin: 2px 0;
+    background-color: var(--background-body);
+    color: var(--text-color);
+    font-size: 1rem;
+    line-height: 1.4;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+#update-form .form-group select option:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#update-form .form-group select option:checked {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+}
+
+#update-form .form-group input:hover {
+    border-bottom-color: var(--primary-color);
+    opacity: 0.8;
+}
+
+#update-form .form-group input::placeholder {
+    color: #999;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+#update-form .form-group input:focus::placeholder {
+    opacity: 0.4;
+}
+
+#update-form .confirm-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+#update-form .confirm-btn:hover {
+    background-color: var(--border-focus-color);
+    opacity: 0.9;
+}
+/* fine popup update style */
+
+/* Stili per il contenitore delle azioni del form */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    /* border-top: 1px solid var(--border-color); */
+}
+
+.form-actions.center {
+    justify-content: center;
+}
+
+/* Se vuoi distribuire più button */
+.form-actions.spread {
+    justify-content: space-between;
+}
+
+/* Se vuoi button a larghezza piena */
+.form-actions.full-width .btn {
+    flex: 1;
+}
+/* fine stili contenitore bottoni */
+
+/* popup create start */
 #add-form .form-group label {
     display: block;
     margin-bottom: 0.5rem;
@@ -154,7 +297,7 @@ main {
     opacity: 0.4;
 }
 
-#add-form .confirm-add-btn {
+#add-form .confirm-btn {
     background-color: var(--primary-color);
     color: white;
     padding: 0.5rem 1rem;
@@ -163,13 +306,23 @@ main {
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.3s ease;
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
 }
 
-#add-form .confirm-add-btn:hover {
+#add-form .confirm-btn:hover {
     background-color: var(--border-focus-color);
     opacity: 0.9;
 }
-/* fine popup style */
+/* popup create end */
+
+/* popup delete start */
+#deletePopup .confirm-btn {
+    background-color: var(--danger-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+/* popup delete end */
