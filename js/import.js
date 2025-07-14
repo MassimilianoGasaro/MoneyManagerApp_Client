@@ -1,6 +1,4 @@
-function isEmptyOrNull(input) {
-  return input === null || input === undefined || input.trim() === '';
-}
+import authManager from './auth.js';
 // per caricare header e footer in modo dinamico
 export function getHeaderAndFooter() {
 Promise.all([
@@ -11,20 +9,17 @@ Promise.all([
       document.getElementById("header").innerHTML = headerData;
       document.getElementById("footer").innerHTML = footerData;
 
-      // Header
-      function isAuth() {
-        return !isEmptyOrNull(localStorage.getItem('authToken'));
-      }
-
       const login = document.getElementById("login");
       const dashboard = document.getElementById("dashboard");
       const reports = document.getElementById("reports");
+
       if (login) {
-          if (isAuth()) {
+          if (authManager.isAuthenticated()) {
               login.textContent = "Logout";
               login.href = "#";
               login.addEventListener("click", () => {
                   localStorage.removeItem('authToken');
+                  localStorage.removeItem('user_id');
                   window.location.href = "index.html"; 
               }); 
 
