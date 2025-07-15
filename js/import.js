@@ -88,10 +88,14 @@ function updateAuthUI() {
 }
 // per caricare header e footer in modo dinamico
 export function getHeaderAndFooter() {
-Promise.all([
-    fetch("./header.html").then(res => res.text()),
-    fetch("./footer.html").then(res => res.text())
-  ])
+    // Determina il base path per GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const basePath = isGitHubPages ? '/MoneyManagerApp_Client' : '';
+    
+    Promise.all([
+        fetch(`${basePath}/header.html`).then(res => res.text()),
+        fetch(`${basePath}/footer.html`).then(res => res.text())
+    ])
     .then(([headerData, footerData]) => {
         document.getElementById("header").innerHTML = headerData;
         document.getElementById("footer").innerHTML = footerData;
