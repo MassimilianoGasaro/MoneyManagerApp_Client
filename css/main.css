@@ -513,20 +513,206 @@ main {
 }
 /* popup delete end */
 
+/* Mobile Table Cards */
+.mobile-table {
+    display: none;
+}
+
+.mobile-card {
+    background: var(--background-secondary);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    border-left: 4px solid var(--primary-color);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.mobile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-card[data-type="SpesaGenerica"] {
+    border-left-color: #dc3545;
+}
+
+.mobile-card[data-type="Entrata"] {
+    border-left-color: #28a745;
+}
+
+.mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.mobile-card-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.mobile-card-amount {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #dc3545;
+    text-align: right;
+    min-width: 100px;
+}
+
+.mobile-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.mobile-card-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-card-detail:last-child {
+    border-bottom: none;
+}
+
+.mobile-card-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobile-card-value {
+    font-weight: 400;
+    color: var(--text-color);
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+.mobile-card-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.mobile-card-actions .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    min-width: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: var(--primary-color);
+    color: white;
+    margin-top: 0.25rem;
+}
+
+.type-badge.spesa {
+    background: #dc3545;
+}
+
+.type-badge.entrata {
+    background: #28a745;
+}
+
 /* media query */
 /* Responsive per filtri mobile */
 @media (max-width: 768px) {
+    /* Nascondi tabella desktop */
+    .styled-table {
+        display: none !important;
+    }
+    
+    /* Mostra cards mobile */
+    .mobile-table {
+        display: block;
+    }
+    
+    /* Responsive filtri */
     .filters-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 8px;
     }
     
     .filters-actions {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.75rem;
     }
     
     .filter-btn,
     .clear-btn {
         width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+    
+    /* Responsive toolbar */
+    .toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .add-btn {
+        grid-column: span 2;
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    .toolbar .btn {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+    
+    /* Responsive popup */
+    .popup-container {
+        width: 95vw;
+        max-width: 500px;
+        margin: 2rem auto;
     }
 }

@@ -227,6 +227,92 @@ export class TableManager {
             `;
             tableBody.appendChild(row);
         });
+        
+        // Aggiorna anche le mobile cards
+        this.updateMobileCards();
+    }
+    
+    // Aggiorna le mobile cards
+    updateMobileCards() {
+        const mobileContainer = document.getElementById('mobile-table-container');
+        if (!mobileContainer) return;
+        
+        if (!this.filteredData || this.filteredData.length === 0) {
+            mobileContainer.innerHTML = `
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">Nessun record trovato</div>
+                    </div>
+                    <div class="mobile-card-details">
+                        <div class="mobile-card-detail">
+                            <span class="mobile-card-label">📝 Prova a modificare i filtri</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        const cardsHtml = this.filteredData.map(record => {
+            const typeClass = record.type === 'SpesaGenerica' ? 'spesa' : 'entrata';
+            const typeIcon = record.type === 'SpesaGenerica' ? '💸' : '💰';
+            
+            return `
+                <div class="mobile-card" data-type="${record.type}">
+                    <div class="mobile-card-header">
+                        <div>
+                            <div class="mobile-card-title">${record.title || record.name || ''}</div>
+                            <div class="type-badge ${typeClass}">
+                                ${typeIcon} ${record.type || ''}
+                            </div>
+                        </div>
+                        <div class="mobile-card-amount">€${record.amount ? record.amount.toFixed(2) : '0.00'}</div>
+                    </div>
+                    
+                    <div class="mobile-card-details">
+                        <div class="mobile-card-detail">
+                            <span class="mobile-card-label">📝 Descrizione:</span>
+                            <span class="mobile-card-value">${record.description || 'N/A'}</span>
+                        </div>
+                        <div class="mobile-card-detail">
+                            <span class="mobile-card-label">📅 Data:</span>
+                            <span class="mobile-card-value">${this.formatDate(record.date)}</span>
+                        </div>
+                        <div class="mobile-card-detail">
+                            <span class="mobile-card-label">🕒 Creato:</span>
+                            <span class="mobile-card-value">${this.formatDate(record.createdAt)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-card-actions">
+                        <button class="btn edit-btn" data-id="${record._id}">
+                            ✏️ Modifica
+                        </button>
+                        <button class="btn delete-btn" data-id="${record._id}">
+                            🗑️ Elimina
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        mobileContainer.innerHTML = cardsHtml;
+    }
+    
+    // Funzione helper per formattare le date
+    formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        } catch (error) {
+            return 'Data non valida';
+        }
     }
 
     // Aggiorna info sui filtri

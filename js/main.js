@@ -78,10 +78,96 @@ async function fetchRecords() {
     }
 }
 
+// Funzione per formattare le date
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('it-IT', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    } catch (error) {
+        return 'Data non valida';
+    }
+}
+
+// Funzione per generare le mobile cards
+function generateMobileCards(records) {
+    const mobileContainer = document.getElementById('mobile-table-container');
+    if (!mobileContainer) return;
+    
+    if (!records || records.length === 0) {
+        mobileContainer.innerHTML = `
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-title">Nessun record trovato</div>
+                </div>
+                <div class="mobile-card-details">
+                    <div class="mobile-card-detail">
+                        <span class="mobile-card-label">📝 Aggiungi il tuo primo record</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    const cardsHtml = records.map(record => {
+        const typeClass = record.type === 'SpesaGenerica' ? 'spesa' : 'entrata';
+        const typeIcon = record.type === 'SpesaGenerica' ? '💸' : '💰';
+        
+        return `
+            <div class="mobile-card" data-type="${record.type}">
+                <div class="mobile-card-header">
+                    <div>
+                        <div class="mobile-card-title">${record.title}</div>
+                        <div class="type-badge ${typeClass}">
+                            ${typeIcon} ${record.type}
+                        </div>
+                    </div>
+                    <div class="mobile-card-amount">€${record.amount.toFixed(2)}</div>
+                </div>
+                
+                <div class="mobile-card-details">
+                    <div class="mobile-card-detail">
+                        <span class="mobile-card-label">📝 Descrizione:</span>
+                        <span class="mobile-card-value">${record.description || 'N/A'}</span>
+                    </div>
+                    <div class="mobile-card-detail">
+                        <span class="mobile-card-label">📅 Data:</span>
+                        <span class="mobile-card-value">${formatDate(record.date)}</span>
+                    </div>
+                    <div class="mobile-card-detail">
+                        <span class="mobile-card-label">🕒 Creato:</span>
+                        <span class="mobile-card-value">${formatDate(record.createdAt)}</span>
+                    </div>
+                </div>
+                
+                <div class="mobile-card-actions">
+                    <button class="btn edit-btn" onclick="openUpdatePopup('${record._id}')">
+                        ✏️ Modifica
+                    </button>
+                    <button class="btn delete-btn" onclick="openDeletePopup('${record._id}')">
+                        🗑️ Elimina
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    mobileContainer.innerHTML = cardsHtml;
+}
+
 // Funzione per popolare la tabella
 function populateTable(records) {
-    // Usa il TableManager per gestire i dati
+    // Usa il TableManager per gestire i dati (tabella desktop)
     tableManager.setData(records);
+    
+    // Genera le mobile cards
+    generateMobileCards(records);
 }
 
 // Funzione per aprire il popup per aggiungere un nuovo record
@@ -238,6 +324,21 @@ function setupTableEventListeners() {
         tableBody.addEventListener('click', (e) => {
             const recordId = e.target.dataset.id;
             console.log('Evento click su:', e.target, 'ID record:', recordId);
+            
+            if (e.target.classList.contains('edit-btn') && recordId) {
+                openEditPopup(recordId);
+            } else if (e.target.classList.contains('delete-btn') && recordId) {
+                deleteRecord(recordId);
+            }
+        });
+    }
+    
+    // Event listeners per le mobile cards
+    const mobileContainer = document.getElementById('mobile-table-container');
+    if (mobileContainer) {
+        mobileContainer.addEventListener('click', (e) => {
+            const recordId = e.target.dataset.id;
+            console.log('Evento click mobile su:', e.target, 'ID record:', recordId);
             
             if (e.target.classList.contains('edit-btn') && recordId) {
                 openEditPopup(recordId);
