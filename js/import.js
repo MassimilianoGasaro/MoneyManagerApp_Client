@@ -1,4 +1,4 @@
- function handleLogout(e) {
+function handleLogout(e) {
     e.preventDefault();
     localStorage.removeItem('authToken');
     localStorage.removeItem('user_id');
@@ -89,8 +89,8 @@ function updateAuthUI() {
 // per caricare header e footer in modo dinamico
 export function getHeaderAndFooter() {
 Promise.all([
-    fetch("../header.html").then(res => res.text()),
-    fetch("../footer.html").then(res => res.text())
+    fetch("./header.html").then(res => res.text()),
+    fetch("./footer.html").then(res => res.text())
   ])
     .then(([headerData, footerData]) => {
         document.getElementById("header").innerHTML = headerData;
