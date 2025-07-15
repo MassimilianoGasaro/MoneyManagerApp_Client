@@ -1,6 +1,7 @@
 import { getHeaderAndFooter } from "./import.js";
 import { DraggablePopup } from './popup.js';
 import { HandleExpenses } from './expensesFunction.js';
+import { ExcelService } from './excelService.js';
 import toast from "./toast.js";
 
 // Istanza globale del servizio API
@@ -85,8 +86,8 @@ function populateTable(records) {
             <td>${record.amount.toFixed(2)}</td>
             <td>${new Date(record.date).toLocaleDateString()}</td>
             <td>
-                <button class="btn edit-btn" data-id="${record._id}">Modifica</button>
-                <button class="btn delete-btn" data-id="${record._id}">Cancella</button>
+                <button class="btn edit-btn" data-id="${record._id}">✏️ Modifica</button>
+                <button class="btn delete-btn" data-id="${record._id}">🗑️ Elimina</button>
             </td>
         `;
         tableBody.appendChild(row);
@@ -299,6 +300,162 @@ async function loadData() {
     populateTable(records);
 }
 
+// ===== FUNZIONALITÀ EXCEL =====
+
+// Inizializza le funzionalità Excel
+function initializeExcelFeatures() {
+    const exportBtn = document.getElementById('export-excel');
+    const importBtn = document.getElementById('import-excel');
+    const templateBtn = document.getElementById('download-template');
+    const fileInput = document.getElementById('excel-file-input');
+
+    if (!exportBtn || !importBtn || !fileInput) {
+        console.error('Bottoni Excel non trovati nel DOM');
+        return;
+    }
+
+    // Export Excel
+    exportBtn.addEventListener('click', async () => {
+        try {
+            toast.info('Esportazione in corso...');
+            const data = await fetchRecords();
+            
+            if (data.length === 0) {
+                toast.warning('Nessun dato da esportare');
+                return;
+            }
+            
+            ExcelService.exportToExcel(data, 'spese');
+            toast.success('File Excel esportato con successo!');
+            
+        } catch (error) {
+            console.error('Errore durante l\'esportazione:', error);
+            toast.error('Errore durante l\'esportazione del file');
+        }
+    });
+
+    // Template Excel
+    if (templateBtn) {
+        templateBtn.addEventListener('click', () => {
+            try {
+                ExcelService.generateTemplate();
+                toast.success('Template Excel scaricato con successo!');
+            } catch (error) {
+                console.error('Errore durante il download del template:', error);
+                toast.error('Errore durante il download del template');
+            }
+        });
+    }
+
+    // Import Excel - apri file dialog
+    importBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Gestisci file selezionato
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            toast.info('Importazione in corso...');
+            
+            const importedData = await ExcelService.importFromExcel(file);
+            
+            if (importedData.length === 0) {
+                toast.warning('Nessun dato trovato nel file');
+                return;
+            }
+
+            // Valida i dati
+            const validation = ExcelService.validateImportData(importedData);
+            
+            if (validation.invalid.length > 0) {
+                showValidationErrors(validation.invalid);
+            }
+            
+            if (validation.valid.length > 0) {
+                await importValidData(validation.valid);
+            }
+            
+        } catch (error) {
+            console.error('Errore durante l\'importazione:', error);
+            toast.error('Errore durante l\'importazione del file');
+        } finally {
+            // Reset input
+            fileInput.value = '';
+        }
+    });
+}
+
+// Funzione per importare i dati validi
+async function importValidData(validData) {
+    try {
+        let successCount = 0;
+        let errorCount = 0;
+        
+        toast.info(`Importazione di ${validData.length} record in corso...`);
+        
+        for (let item of validData) {
+            try {
+                await expensesService.addExpense(item);
+                successCount++;
+            } catch (error) {
+                errorCount++;
+                console.error('Errore nell\'importazione del record:', error);
+            }
+        }
+        
+        if (successCount > 0) {
+            toast.success(`${successCount} record importati con successo!`);
+            await loadData(); // Ricarica la tabella
+        }
+        
+        if (errorCount > 0) {
+            toast.warning(`${errorCount} record non sono stati importati`);
+        }
+        
+    } catch (error) {
+        console.error('Errore durante l\'importazione:', error);
+        toast.error('Errore durante l\'importazione dei dati');
+    }
+}
+
+// Funzione per mostrare errori di validazione
+function showValidationErrors(invalidData) {
+    // const popup = getPopupInstance('createPopup');
+    
+    // let errorHtml = '<div class="validation-errors">';
+    // errorHtml += '<h4>Errori di validazione trovati:</h4>';
+    
+    // invalidData.forEach(item => {
+    //     errorHtml += `<div class="error-item">`;
+    //     errorHtml += `<strong>Riga ${item.row}:</strong> ${item.errors.join(', ')}`;
+    //     errorHtml += `</div>`;
+    // });
+    
+    // errorHtml += '</div>';
+    // errorHtml += '<p>I record validi sono stati importati correttamente.</p>';
+    
+    // popup.show({
+    //     title: 'Errori di Validazione',
+    //     saveBtnText: 'Chiudi',
+    //     onSave: () => {
+    //         // Non fare nulla, il popup si chiude automaticamente
+    //     }
+    // });
+    
+    // // Sostituisci il contenuto del popup con gli errori
+    // const contentArea = popup.popup.querySelector('.popup-content');
+    // contentArea.innerHTML = errorHtml + `
+    //     <div class="form-actions">
+    //         <button type="button" class="btn confirm-btn">Chiudi</button>
+    //     </div>
+    // `;
+}
+
+// ===== FINE FUNZIONALITÀ EXCEL =====
+
 // Inizializzazione dell'applicazione
 async function init() {
     // Carica header e footer
@@ -317,6 +474,9 @@ async function init() {
     
     // Configura event listeners per la tabella
     setupTableEventListeners();
+    
+    // Inizializza funzionalità Excel
+    initializeExcelFeatures();
 }
 
 // Avvia l'applicazione quando il DOM è pronto

@@ -2,6 +2,76 @@
 @import url("variables.css");
 @import url("popup.css");
 
+/* Toolbar con bottoni */
+.toolbar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toolbar>.btn {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.export-btn {
+    background-color: var(--export-excel-btn);
+    color: var(--toolbar-text-color);
+}
+
+.import-btn {
+    background-color: var(--import-excel-btn);
+    color: var(--toolbar-text-color);
+}
+
+.template-btn {
+    background-color: var(--template-excel-btn);
+    color: var(--toolbar-text-color);
+}
+
+.export-btn:hover,
+.import-btn:hover,
+.template-btn:hover,
+.add-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* Popup per validation errors */
+.validation-errors {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.validation-errors h4 {
+    color: #721c24;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.error-item {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background-color: #ffffff;
+    border-radius: 3px;
+    border-left: 3px solid #dc3545;
+}
+
+.error-item strong {
+    color: #721c24;
+}
+
 main {
     background-color: var(--background-body);
     color: var(--text-color);
@@ -51,16 +121,6 @@ main {
 .delete-btn {
     background-color: #dc3545;
     color: white;
-}
-
-.add-btn {
-    background-color: #007bff;
-    color: white;
-    margin-top: 1rem;
-}
-
-.btn:hover {
-    opacity: 0.9;
 }
 
 /* Stili per button disabilitato */
