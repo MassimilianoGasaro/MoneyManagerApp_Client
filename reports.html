@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/reports.css">
+    <title>Gestione Spese - Reports</title>
+    <!-- Chart.js per i grafici -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Route Guard Script -->
+    <script type="module">
+        import { initRouteGuard } from './js/route-guard.js';
+        
+        // Controlla l'autenticazione prima di caricare la pagina
+        if (!initRouteGuard()) {
+            throw new Error('Accesso negato');
+        }
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <div id="header"></div>
+
+    <!-- Main Content -->
+    <main class="reports-container">
+        <div class="reports-header">
+            <h1>📊 Reports e Analisi</h1>
+            <p>Visualizza le tue statistiche finanziarie</p>
+            <button class="btn refresh-btn" id="refresh-data">🔄 Aggiorna Dati</button>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="reports-grid">
+            <!-- Card 1: Spese per Mese -->
+            <div class="report-card" data-report="monthly-expenses">
+                <div class="card-icon">📈</div>
+                <div class="card-content">
+                    <h3>Spese per Mese</h3>
+                    <p>Istogramma delle spese mensili</p>
+                    <div class="card-stats">
+                        <span class="stat-label">Ultimo mese:</span>
+                        <span class="stat-value" id="last-month-total">€ 0.00</span>
+                    </div>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <!-- Card 2: Spese per Categoria -->
+            <div class="report-card" data-report="category-expenses">
+                <div class="card-icon">🍰</div>
+                <div class="card-content">
+                    <h3>Spese per Categoria</h3>
+                    <p>Grafico a torta delle categorie</p>
+                    <div class="card-stats">
+                        <span class="stat-label">Categorie attive:</span>
+                        <span class="stat-value" id="active-categories">0</span>
+                    </div>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <!-- Card 3: Andamento Temporale -->
+            <div class="report-card" data-report="trend-analysis">
+                <div class="card-icon">📉</div>
+                <div class="card-content">
+                    <h3>Andamento Temporale</h3>
+                    <p>Linea temporale delle spese</p>
+                    <div class="card-stats">
+                        <span class="stat-label">Tendenza:</span>
+                        <span class="stat-value" id="trend-direction">-</span>
+                    </div>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <!-- Card 4: Top Spese -->
+            <div class="report-card" data-report="top-expenses">
+                <div class="card-icon">🎯</div>
+                <div class="card-content">
+                    <h3>Top Spese</h3>
+                    <p>Le spese più significative</p>
+                    <div class="card-stats">
+                        <span class="stat-label">Spesa massima:</span>
+                        <span class="stat-value" id="max-expense">€ 0.00</span>
+                    </div>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <!-- Card 5: Confronto Annuale -->
+            <div class="report-card" data-report="yearly-comparison">
+                <div class="card-icon">🔄</div>
+                <div class="card-content">
+                    <h3>Confronto Annuale</h3>
+                    <p>Confronto anno su anno</p>
+                    <div class="card-stats">
+                        <span class="stat-label">Variazione:</span>
+                        <span class="stat-value" id="yearly-change">0%</span>
+                    </div>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <!-- Card 6: Budget Analysis -->
+            <div class="report-card" data-report="budget-analysis">
+                <div class="card-icon">💰</div>
+                <div class="card-content">
+                    <h3>Analisi Budget</h3>
+                    <p>Confronto budget vs spese</p>
+                    <div class="card-stats">
+                        <span class="stat-label">Budget utilizzato:</span>
+                        <span class="stat-value" id="budget-usage">0%</span>
+                    </div>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+        </div>
+
+        <!-- Popup per i grafici -->
+        <div id="chart-popup" class="popup-overlay">
+            <div class="popup-container large">
+                <div class="popup-header">
+                    <h3 id="chart-title"></h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="popup-content">
+                    <div class="chart-container">
+                        <canvas id="report-chart"></canvas>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="btn export-chart-btn" id="export-chart">📊 Esporta Grafico</button>
+                        <button class="btn period-btn" id="change-period">📅 Cambia Periodo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popup per selezione periodo -->
+        <div id="period-popup" class="popup-overlay">
+            <div class="popup-container">
+                <div class="popup-header">
+                    <h3>Seleziona Periodo</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="popup-content">
+                    <form id="period-form">
+                        <div class="form-group">
+                            <label for="start-date">Data inizio:</label>
+                            <input type="date" id="start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">Data fine:</label>
+                            <input type="date" id="end-date" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn confirm-btn">Applica</button>
+                            <button type="button" class="btn cancel-btn">Annulla</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer"></div>
+    <script src="js/reports.js" type="module" defer></script>
+</body>
+</html>
