@@ -2,10 +2,14 @@ import { getHeaderAndFooter } from "./import.js";
 import { DraggablePopup } from './popup.js';
 import { HandleExpenses } from './expensesFunction.js';
 import { ExcelService } from './excelService.js';
+import { TableManager } from './tableManager.js';
 import toast from "./toast.js";
 
 // Istanza globale del servizio API
 const expensesService = new HandleExpenses();
+
+// Istanza globale del gestore tabella
+const tableManager = new TableManager();
 
 // Istanze globali inizializzate a null
 let createPopup = null;
@@ -76,22 +80,8 @@ async function fetchRecords() {
 
 // Funzione per popolare la tabella
 function populateTable(records) {
-    const tableBody = document.querySelector(".styled-table tbody");
-    tableBody.innerHTML = ''; // Pulisce la tabella
-    
-    records.forEach(record => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${record.name}</td>
-            <td>${record.amount.toFixed(2)}</td>
-            <td>${new Date(record.date).toLocaleDateString()}</td>
-            <td>
-                <button class="btn edit-btn" data-id="${record._id}">✏️ Modifica</button>
-                <button class="btn delete-btn" data-id="${record._id}">🗑️ Elimina</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+    // Usa il TableManager per gestire i dati
+    tableManager.setData(records);
 }
 
 // Funzione per aprire il popup per aggiungere un nuovo record
@@ -318,14 +308,16 @@ function initializeExcelFeatures() {
     exportBtn.addEventListener('click', async () => {
         try {
             toast.info('Esportazione in corso...');
-            const data = await fetchRecords();
+            
+            // Esporta solo i dati filtrati
+            const data = tableManager.getFilteredData();
             
             if (data.length === 0) {
                 toast.warning('Nessun dato da esportare');
                 return;
             }
             
-            ExcelService.exportToExcel(data, 'spese');
+            ExcelService.exportToExcel(data, 'spese_filtrate');
             toast.success('File Excel esportato con successo!');
             
         } catch (error) {

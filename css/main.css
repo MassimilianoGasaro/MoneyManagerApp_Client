@@ -2,6 +2,149 @@
 @import url("variables.css");
 @import url("popup.css");
 
+/* Sezione Filtri */
+.filters-section {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filters-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.filters-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.results-info {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.filter-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clear-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover,
+.clear-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* Ordinamento Tabella */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background-color 0.3s ease;
+}
+
+.sortable:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sort-indicator {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.sortable.asc .sort-indicator {
+    color: var(--primary-color);
+}
+
+.sortable.asc .sort-indicator::after {
+    content: " ↑";
+}
+
+.sortable.desc .sort-indicator {
+    color: var(--primary-color);
+}
+
+.sortable.desc .sort-indicator::after {
+    content: " ↓";
+}
+
+/* Responsive per filtri */
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filters-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-btn,
+    .clear-btn {
+        width: 100%;
+    }
+}
+
 /* Toolbar con bottoni */
 .toolbar {
     display: flex;

@@ -32,12 +32,60 @@
             <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display: none;">
         </div>
         
+        <!-- Sezione Filtri -->
+        <div class="filters-section">
+            <h3>🔍 Filtri e Ricerca</h3>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="search-input">Cerca:</label>
+                    <input type="text" id="search-input" placeholder="Cerca in titolo o descrizione...">
+                </div>
+                <div class="filter-group">
+                    <label for="type-filter">Tipo:</label>
+                    <select id="type-filter">
+                        <option value="">Tutti i tipi</option>
+                        <option value="SpesaGenerica">Spesa Generica</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="date-from">Data da:</label>
+                    <input type="date" id="date-from">
+                </div>
+                <div class="filter-group">
+                    <label for="date-to">Data a:</label>
+                    <input type="date" id="date-to">
+                </div>
+                <div class="filter-group">
+                    <label for="amount-min">Importo min:</label>
+                    <input type="number" id="amount-min" step="0.01" placeholder="0.00">
+                </div>
+                <div class="filter-group">
+                    <label for="amount-max">Importo max:</label>
+                    <input type="number" id="amount-max" step="0.01" placeholder="1000.00">
+                </div>
+            </div>
+            <div class="filters-actions">
+                <button class="btn filter-btn" id="apply-filters">✅ Applica Filtri</button>
+                <button class="btn clear-btn" id="clear-filters">🔄 Pulisci Filtri</button>
+                <div class="results-info" id="results-info"></div>
+            </div>
+        </div>
+        
         <table class="styled-table">
             <thead>
                 <tr>
-                    <th>Descrizione</th>
-                    <th>Valore</th>
-                    <th>Data</th>
+                    <th class="sortable" data-column="title">
+                        Titolo <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="amount">
+                        Valore <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="date">
+                        Data <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="type">
+                        Tipo <span class="sort-indicator">⇅</span>
+                    </th>
                     <th>Azioni</th>
                 </tr>
             </thead>
