@@ -128,23 +128,6 @@
     content: " ↓";
 }
 
-/* Responsive per filtri */
-@media (max-width: 768px) {
-    .filters-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .filters-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .filter-btn,
-    .clear-btn {
-        width: 100%;
-    }
-}
-
 /* Toolbar con bottoni */
 .toolbar {
     display: flex;
@@ -529,3 +512,21 @@ main {
     transition: background-color 0.3s ease;
 }
 /* popup delete end */
+
+/* media query */
+/* Responsive per filtri mobile */
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filters-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-btn,
+    .clear-btn {
+        width: 100%;
+    }
+}
