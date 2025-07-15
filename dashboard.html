@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/main.css">
     <title>Gestione Spese</title>
+    <!-- SheetJS per Excel Import/Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Route Guard Script -->
     <script type="module">
         import { initRouteGuard } from './js/route-guard.js';
@@ -22,7 +24,14 @@
 
     <!-- Main -->
     <main>
-        <button class="btn add-btn">Aggiungi Record</button>
+        <div class="toolbar">
+            <button class="btn add-btn">➕ Aggiungi Record</button>
+            <button class="btn export-btn" id="export-excel">📊 Esporta Excel</button>
+            <button class="btn import-btn" id="import-excel">📂 Importa Excel</button>
+            <button class="btn template-btn" id="download-template">📄 Scarica Template</button>
+            <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display: none;">
+        </div>
+        
         <table class="styled-table">
             <thead>
                 <tr>
@@ -119,7 +128,7 @@
                             name="date-record"
                             value="2018-07-22"
                             min="2018-01-01"
-                            max="2030-12-31" />
+                            max="2030-12-31">
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn confirm-btn">Salva</button>
