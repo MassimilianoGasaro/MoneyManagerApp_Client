@@ -123,7 +123,7 @@ function generateMobileCards(records) {
             <div class="mobile-card" data-type="${record.type}">
                 <div class="mobile-card-header">
                     <div>
-                        <div class="mobile-card-title">${record.title}</div>
+                        <div class="mobile-card-title">${record.title || record.name || ''}</div>
                         <div class="type-badge ${typeClass}">
                             ${typeIcon} ${record.type}
                         </div>
@@ -137,7 +137,7 @@ function generateMobileCards(records) {
                         <span class="mobile-card-value">${record.description || 'N/A'}</span>
                     </div>
                     <div class="mobile-card-detail">
-                        <span class="mobile-card-label">📅 Data:</span>
+                        <span class="mobile-card-label">📅 Data Operazione:</span>
                         <span class="mobile-card-value">${formatDate(record.date)}</span>
                     </div>
                     <div class="mobile-card-detail">
@@ -224,6 +224,11 @@ async function saveNewRecord() {
         if (!response.success) {
             throw new Error(`Errore nell'inserimento del dato: ${response.message}`);
         }
+
+        toast.success('Record aggiunto con successo!');
+
+        await loadData(); // Ricarica i dati nella tabella
+
     } catch (error) {
         throw error; // Rilancia per gestione in onError
     }
@@ -365,7 +370,7 @@ async function deleteRecord(recordId) {
                 toast.info('Eliminazione in corso...');
                 
                 const response = await expensesService.deleteExpenseById(recordId);
-                if (!response.ok) {
+                if (!response.success) {
                     throw new Error(response.message);
                 }
                 

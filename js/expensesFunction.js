@@ -67,7 +67,11 @@ class HandleExpenses extends ApiService {
         try {
             console.log("Recupero spesa per ID:", id);
 
-            const response = await fetch(`${this.#apiUrl}/${id}`, {
+            const params = new URLSearchParams();
+            const userId = localStorage.getItem('user_id');
+            if (userId) params.append('user_id', userId);
+            
+            const response = await fetch(`${this.#apiUrl}/${id}?${params.toString()}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,7 +116,11 @@ class HandleExpenses extends ApiService {
     async deleteExpenseById(id) {
         try {
             console.log("Elimina spesa con ID:", id);
-            const response = await fetch(`${this.#apiUrl}/${id}`, {
+            const params = new URLSearchParams();
+            const userId = localStorage.getItem('user_id');
+            if (userId) params.append('user_id', userId);
+            
+            const response = await fetch(`${this.#apiUrl}/${id}?${params.toString()}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
