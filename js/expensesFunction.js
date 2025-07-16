@@ -3,7 +3,7 @@ class HandleExpenses extends ApiService {
     #apiUrl = null;
 
     constructor() {
-        super('dashboard');
+        super('activities');
         this.#apiUrl = this.endpoint;
     }
 
