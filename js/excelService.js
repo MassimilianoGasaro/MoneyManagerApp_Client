@@ -76,12 +76,11 @@ export class ExcelService {
                         
                         // Trasforma i dati nel formato della tua app
                         const formattedData = jsonData.map(row => ({
-                            title: row['Titolo'] || row['title'] || '',
+                            name: row['Titolo'] || row['title'] || '',
                             description: row['Descrizione'] || row['description'] || '',
                             amount: parseFloat(row['Importo'] || row['amount']) || 0,
                             type: row['Tipo'] || row['type'] || 'SpesaGenerica',
                             date: this.parseDate(row['Data'] || row['date']),
-                            user_id: localStorage.getItem('user_id')
                         }));
                         
                         resolve(formattedData);
@@ -156,7 +155,7 @@ export class ExcelService {
             const errors = [];
             
             // Validazioni
-            if (!item.title || item.title.trim() === '') {
+            if (!item.name || item.name.trim() === '') {
                 errors.push('Titolo mancante');
             }
             

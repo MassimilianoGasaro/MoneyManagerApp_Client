@@ -269,44 +269,46 @@ main {
 }
 
 #update-form .form-group input {
+    width: 100%;
     margin-bottom: 0.3rem;
     color: var(--text-color);
-    border: none;
-    border-bottom: 2px solid var(--border-color);
-    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--background-body);
     outline: none;
-    padding: 0.5rem 0;
+    padding: 0.75rem;
     font-size: 1rem;
-    transition: border-bottom-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #update-form .form-group input:focus {
-    border-bottom-color: var(--border-focus-color);
+    border-color: var(--border-focus-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 #update-form .form-group select {
+    width: 100%;
     margin-bottom: 0.3rem;
     color: var(--text-color);
-    border: none;
-    border-bottom: 2px solid var(--border-color);
-    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--background-body);
     outline: none;
-    padding: 0.5rem 0;
+    padding: 0.75rem;
     font-size: 1rem;
-    transition: border-bottom-color 0.3s ease, box-shadow 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
     appearance: none; /* Rimuove lo stile default del browser */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 0.5rem center;
+    background-position: right 0.75rem center;
     background-size: 1rem;
-    padding-right: 2rem; /* Spazio per la freccia */
-    min-height: 2.5rem;
+    padding-right: 2.5rem; /* Spazio per la freccia */
 }
 
 #update-form .form-group select:focus {
-    border-bottom-color: var(--border-focus-color);
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    border-color: var(--border-focus-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 #update-form .form-group select:hover {
@@ -401,44 +403,46 @@ main {
 }
 
 #add-form .form-group input {
+    width: 100%;
     margin-bottom: 0.3rem;
     color: var(--text-color);
-    border: none;
-    border-bottom: 2px solid var(--border-color);
-    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--background-body);
     outline: none;
-    padding: 0.5rem 0;
+    padding: 0.75rem;
     font-size: 1rem;
-    transition: border-bottom-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #add-form .form-group input:focus {
-    border-bottom-color: var(--border-focus-color);
+    border-color: var(--border-focus-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 #add-form .form-group select {
+    width: 100%;
     margin-bottom: 0.3rem;
     color: var(--text-color);
-    border: none;
-    border-bottom: 2px solid var(--border-color);
-    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--background-body);
     outline: none;
-    padding: 0.5rem 0;
+    padding: 0.75rem;
     font-size: 1rem;
-    transition: border-bottom-color 0.3s ease, box-shadow 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
     appearance: none; /* Rimuove lo stile default del browser */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 0.5rem center;
+    background-position: right 0.75rem center;
     background-size: 1rem;
-    padding-right: 2rem; /* Spazio per la freccia */
-    min-height: 2.5rem;
+    padding-right: 2.5rem; /* Spazio per la freccia */
 }
 
 #add-form .form-group select:focus {
-    border-bottom-color: var(--border-focus-color);
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    border-color: var(--border-focus-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 #add-form .form-group select:hover {

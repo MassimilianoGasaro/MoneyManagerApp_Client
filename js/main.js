@@ -94,80 +94,11 @@ function formatDate(dateString) {
     }
 }
 
-// Funzione per generare le mobile cards
-function generateMobileCards(records) {
-    const mobileContainer = document.getElementById('mobile-table-container');
-    if (!mobileContainer) return;
-    
-    if (!records || records.length === 0) {
-        mobileContainer.innerHTML = `
-            <div class="mobile-card">
-                <div class="mobile-card-header">
-                    <div class="mobile-card-title">Nessun record trovato</div>
-                </div>
-                <div class="mobile-card-details">
-                    <div class="mobile-card-detail">
-                        <span class="mobile-card-label">📝 Aggiungi il tuo primo record</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        return;
-    }
-    
-    const cardsHtml = records.map(record => {
-        const typeClass = record.type === 'SpesaGenerica' ? 'spesa' : 'entrata';
-        const typeIcon = record.type === 'SpesaGenerica' ? '💸' : '💰';
-        
-        return `
-            <div class="mobile-card" data-type="${record.type}">
-                <div class="mobile-card-header">
-                    <div>
-                        <div class="mobile-card-title">${record.title || record.name || ''}</div>
-                        <div class="type-badge ${typeClass}">
-                            ${typeIcon} ${record.type}
-                        </div>
-                    </div>
-                    <div class="mobile-card-amount">€${record.amount.toFixed(2)}</div>
-                </div>
-                
-                <div class="mobile-card-details">
-                    <div class="mobile-card-detail">
-                        <span class="mobile-card-label">📝 Descrizione:</span>
-                        <span class="mobile-card-value">${record.description || 'N/A'}</span>
-                    </div>
-                    <div class="mobile-card-detail">
-                        <span class="mobile-card-label">📅 Data Operazione:</span>
-                        <span class="mobile-card-value">${formatDate(record.date)}</span>
-                    </div>
-                    <div class="mobile-card-detail">
-                        <span class="mobile-card-label">🕒 Creato:</span>
-                        <span class="mobile-card-value">${formatDate(record.createdAt)}</span>
-                    </div>
-                </div>
-                
-                <div class="mobile-card-actions">
-                    <button class="btn edit-btn" onclick="openUpdatePopup('${record._id}')">
-                        ✏️ Modifica
-                    </button>
-                    <button class="btn delete-btn" onclick="openDeletePopup('${record._id}')">
-                        🗑️ Elimina
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    mobileContainer.innerHTML = cardsHtml;
-}
 
 // Funzione per popolare la tabella
 function populateTable(records) {
-    // Usa il TableManager per gestire i dati (tabella desktop)
+    // Usa il TableManager per gestire i dati (sia tabella desktop che versione mobile)
     tableManager.setData(records);
-    
-    // Genera le mobile cards
-    generateMobileCards(records);
 }
 
 // Funzione per aprire il popup per aggiungere un nuovo record
@@ -198,14 +129,28 @@ function openCreatePopup() {
 async function saveNewRecord() {
     try {
         toast.info('Salvataggio in corso...');
+
+        // Trova il popup specifico e cerca gli elementi al suo interno
+        const createPopupElement = document.getElementById('createPopup');
+
+        if (!createPopupElement) {
+            console.error('Popup createPopup non trovato nel DOM');
+            return;
+        }
+
+        const titleElement = createPopupElement.querySelector('#title');
+        const descriptionElement = createPopupElement.querySelector('#description');
+        const amountElement = createPopupElement.querySelector('#amount');
+        const typeElement = createPopupElement.querySelector('#type-select');
+        const dateElement = createPopupElement.querySelector('#date');
         
         // Raccogli i dati dal form
         const formData = {
-            title: document.getElementById('title').value,
-            description: document.getElementById('description').value,
-            amount: parseFloat(document.getElementById('amount').value),
-            type: document.getElementById('type-select').value,
-            date: document.getElementById('date').value
+            title: titleElement.value,
+            description: descriptionElement.value,
+            amount: parseFloat(amountElement.value),
+            type: typeElement.value,
+            date: dateElement.value
         };
 
         if (!formData.title || !formData.amount || !formData.date) {
@@ -254,25 +199,75 @@ function openEditPopup(recordId) {
         }
     });
     
-    // Carica i dati del record nel form
-    loadRecordData(recordId);
+    // Carica i dati del record nel form DOPO che il popup è mostrato
+    // Usa un setTimeout per assicurarsi che il popup sia renderizzato
+    setTimeout(() => {
+        loadRecordData(recordId);
+    }, 200);
 }
 
 // Funzione per caricare i dati di un record nel form (per la modifica)
 async function loadRecordData(recordId) {
     try {
         const response = await expensesService.getExpenseById(recordId);
-        if (!response.ok) {
+        if (!response.success) {
             throw new Error(response.message);
         }
-        const recordData = await response.json();
         
-        // Popola il form con i dati del record
-        document.getElementById('title').value = recordData.title || '';
-        document.getElementById('description').value = recordData.description || '';
-        document.getElementById('amount').value = recordData.amount || '';
-        document.getElementById('type-select').value = recordData.type || '';
-        document.getElementById('date').value = recordData.date || '';
+        const data = response.data;
+        console.log('Dati del record caricati:', data);
+        
+        // Trova il popup specifico e cerca gli elementi al suo interno
+        const updatePopupElement = document.getElementById('updatePopup');
+        console.log('Popup updatePopup trovato:', updatePopupElement);
+        
+        if (!updatePopupElement) {
+            console.error('Popup updatePopup non trovato nel DOM');
+            return;
+        }
+        
+        // Cerca gli elementi del form nel popup specifico
+        const titleElement = updatePopupElement.querySelector('#title');
+        const descriptionElement = updatePopupElement.querySelector('#description');
+        const amountElement = updatePopupElement.querySelector('#amount');
+        const typeElement = updatePopupElement.querySelector('#type-select');
+        const dateElement = updatePopupElement.querySelector('#date');
+        
+        
+        // Popola il form se gli elementi esistono
+        if (titleElement) {
+            titleElement.value = data.name || '';
+            titleElement.dispatchEvent(new Event('input', { bubbles: true }));
+            console.log("Title impostato:", titleElement.value);
+        } else {
+            console.error('Elemento title non trovato nel popup');
+        }
+        
+        if (descriptionElement) {
+            descriptionElement.value = data.description || '';
+            descriptionElement.dispatchEvent(new Event('input', { bubbles: true }));
+            console.log("Description impostato:", descriptionElement.value);
+        }
+        
+        if (amountElement) {
+            amountElement.value = data.amount || '';
+            amountElement.dispatchEvent(new Event('input', { bubbles: true }));
+            console.log("Amount impostato:", amountElement.value);
+        }
+        
+        if (typeElement) {
+            typeElement.value = data.type || '';
+            typeElement.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log("Type impostato:", typeElement.value);
+        }
+        
+        if (dateElement) {
+            // Formatta la data per input type="date"
+            const formattedDate = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
+            dateElement.value = formattedDate;
+            dateElement.dispatchEvent(new Event('input', { bubbles: true }));
+            console.log("Date impostato:", dateElement.value);
+        }
         
     } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
@@ -285,13 +280,28 @@ async function updateRecord(recordId) {
     try {
         toast.info('Aggiornamento in corso...');
         
+        // Trova il popup specifico e cerca gli elementi al suo interno
+        const updatePopupElement = document.getElementById('updatePopup');
+        
+        if (!updatePopupElement) {
+            console.error('Popup updatePopup non trovato nel DOM');
+            return;
+        }
+        
+        // Cerca gli elementi del form nel popup specifico
+        const titleElement = updatePopupElement.querySelector('#title');
+        const descriptionElement = updatePopupElement.querySelector('#description');
+        const amountElement = updatePopupElement.querySelector('#amount');
+        const typeElement = updatePopupElement.querySelector('#type-select');
+        const dateElement = updatePopupElement.querySelector('#date');
+
         // Raccogli i dati dal form
         const formData = {
-            title: document.getElementById('title').value,
-            description: document.getElementById('description').value,
-            amount: parseFloat(document.getElementById('amount').value),
-            type: document.getElementById('type-select').value,
-            date: document.getElementById('date').value
+            title: titleElement.value,
+            description: descriptionElement.value,
+            amount: parseFloat(amountElement.value),
+            type: typeElement.value,
+            date: dateElement.value
         };
         
         // Validazione base
@@ -308,7 +318,7 @@ async function updateRecord(recordId) {
         };
         
         const response = await expensesService.updateExpenseById(recordId, body);
-        if (!response.ok) {
+        if (!response.success) {
             throw new Error(response.message);
         }
         toast.success('Record aggiornato con successo!');
@@ -380,7 +390,7 @@ async function deleteRecord(recordId) {
                 await loadData();
         
             } catch (error) {
-                toast.error(`Errore nell'eliminazione: ${error.message}`);
+                throw error; // Rilancia per gestione in onError
             }
         },
         onError: (error) => {
@@ -459,6 +469,8 @@ function initializeExcelFeatures() {
             toast.info('Importazione in corso...');
             
             const importedData = await ExcelService.importFromExcel(file);
+
+            console.log('Dati importati:', importedData);
             
             if (importedData.length === 0) {
                 toast.warning('Nessun dato trovato nel file');
@@ -467,6 +479,8 @@ function initializeExcelFeatures() {
 
             // Valida i dati
             const validation = ExcelService.validateImportData(importedData);
+
+            console.log('Dati validati:', validation);
             
             if (validation.invalid.length > 0) {
                 showValidationErrors(validation.invalid);
