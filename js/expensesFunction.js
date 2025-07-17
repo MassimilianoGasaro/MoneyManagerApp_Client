@@ -97,7 +97,12 @@ class HandleExpenses extends ApiService {
 
         try {
             console.log("Aggiorna spesa con ID:", id, expense);
-            const response = await fetch(`${this.#apiUrl}/${id}`, {
+
+            const params = new URLSearchParams();
+            const userId = localStorage.getItem('user_id');
+            if (userId) params.append('user_id', userId);
+
+            const response = await fetch(`${this.#apiUrl}/${id}?${params.toString()}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
