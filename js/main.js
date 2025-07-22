@@ -78,23 +78,6 @@ async function fetchRecords() {
     }
 }
 
-// Funzione per formattare le date
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('it-IT', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-    } catch (error) {
-        return 'Data non valida';
-    }
-}
-
-
 // Funzione per popolare la tabella
 function populateTable(records) {
     // Usa il TableManager per gestire i dati (sia tabella desktop che versione mobile)
@@ -180,8 +163,11 @@ async function saveNewRecord() {
 }
 
 // Funzione per aprire il popup per modificare un record
-function openEditPopup(recordId) {
+async function openEditPopup(recordId) {
     console.log('Apertura del popup per modificare record:', recordId);
+
+    // carica i dati del record prima di mostrare il popup
+    const data = await loadRecordData(recordId);
     
     // Usa la stessa istanza globale
     const popup = getPopupInstance("updatePopup");
@@ -199,11 +185,7 @@ function openEditPopup(recordId) {
         }
     });
     
-    // Carica i dati del record nel form DOPO che il popup è mostrato
-    // Usa un setTimeout per assicurarsi che il popup sia renderizzato
-    setTimeout(() => {
-        loadRecordData(recordId);
-    }, 200);
+    populateEditForm(data);
 }
 
 // Funzione per caricare i dati di un record nel form (per la modifica)
@@ -214,64 +196,66 @@ async function loadRecordData(recordId) {
             throw new Error(response.message);
         }
         
-        const data = response.data;
-        console.log('Dati del record caricati:', data);
-        
-        // Trova il popup specifico e cerca gli elementi al suo interno
-        const updatePopupElement = document.getElementById('updatePopup');
-        console.log('Popup updatePopup trovato:', updatePopupElement);
-        
-        if (!updatePopupElement) {
-            console.error('Popup updatePopup non trovato nel DOM');
-            return;
-        }
-        
-        // Cerca gli elementi del form nel popup specifico
-        const titleElement = updatePopupElement.querySelector('#title');
-        const descriptionElement = updatePopupElement.querySelector('#description');
-        const amountElement = updatePopupElement.querySelector('#amount');
-        const typeElement = updatePopupElement.querySelector('#type-select');
-        const dateElement = updatePopupElement.querySelector('#date');
-        
-        
-        // Popola il form se gli elementi esistono
-        if (titleElement) {
-            titleElement.value = data.name || '';
-            titleElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Title impostato:", titleElement.value);
-        } else {
-            console.error('Elemento title non trovato nel popup');
-        }
-        
-        if (descriptionElement) {
-            descriptionElement.value = data.description || '';
-            descriptionElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Description impostato:", descriptionElement.value);
-        }
-        
-        if (amountElement) {
-            amountElement.value = data.amount || '';
-            amountElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Amount impostato:", amountElement.value);
-        }
-        
-        if (typeElement) {
-            typeElement.value = data.type || '';
-            typeElement.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log("Type impostato:", typeElement.value);
-        }
-        
-        if (dateElement) {
-            // Formatta la data per input type="date"
-            const formattedDate = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
-            dateElement.value = formattedDate;
-            dateElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Date impostato:", dateElement.value);
-        }
-        
+        console.log('Dati del record caricati:', response.data);
+        return response.data;
     } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
         toast.error('Errore nel caricamento dei dati del record');
+    }
+}
+
+// Funzione per popolare il form di modifica con i dati del record
+function populateEditForm(data) {
+    // Trova il popup specifico e cerca gli elementi al suo interno
+    const updatePopupElement = document.getElementById('updatePopup');
+    console.log('Popup updatePopup trovato:', updatePopupElement);
+    
+    if (!updatePopupElement) {
+        console.error('Popup updatePopup non trovato nel DOM');
+        return;
+    }
+    
+    // Cerca gli elementi del form nel popup specifico
+    const titleElement = updatePopupElement.querySelector('#title');
+    const descriptionElement = updatePopupElement.querySelector('#description');
+    const amountElement = updatePopupElement.querySelector('#amount');
+    const typeElement = updatePopupElement.querySelector('#type-select');
+    const dateElement = updatePopupElement.querySelector('#date');
+    
+    
+    // Popola il form se gli elementi esistono
+    if (titleElement) {
+        titleElement.value = data.name || '';
+        titleElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Title impostato:", titleElement.value);
+    } else {
+        console.error('Elemento title non trovato nel popup');
+    }
+    
+    if (descriptionElement) {
+        descriptionElement.value = data.description || '';
+        descriptionElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Description impostato:", descriptionElement.value);
+    }
+    
+    if (amountElement) {
+        amountElement.value = data.amount || '';
+        amountElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Amount impostato:", amountElement.value);
+    }
+    
+    if (typeElement) {
+        typeElement.value = data.type || '';
+        typeElement.dispatchEvent(new Event('change', { bubbles: true }));
+        console.log("Type impostato:", typeElement.value);
+    }
+    
+    if (dateElement) {
+        // Formatta la data per input type="date"
+        const formattedDate = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
+        dateElement.value = formattedDate;
+        dateElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Date impostato:", dateElement.value);
     }
 }
 
