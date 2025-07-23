@@ -219,7 +219,7 @@ export class TableManager {
                 <td>${record.title || record.name || ''}</td>
                 <td>${record.amount ? record.amount.toFixed(2) : '0.00'}</td>
                 <td>${record.date ? new Date(record.date).toLocaleDateString('it-IT') : ''}</td>
-                <td>${record.type || ''}</td>
+                <td>${record.type?.name || ''}</td>
                 <td>
                     <button class="btn edit-btn" data-id="${record._id}">✏️ Modifica</button>
                     <button class="btn delete-btn" data-id="${record._id}">🗑️ Elimina</button>

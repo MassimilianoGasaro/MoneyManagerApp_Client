@@ -7,9 +7,41 @@
     background-color: var(--background-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 1.5rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Stato collapsed - nascosto */
+.filters-section.collapsed {
+    max-height: 0;
+    margin-bottom: 0;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
+}
+
+/* Stato expanded - visibile */
+.filters-section.expanded {
+    max-height: 1000px;
+    opacity: 1;
+}
+
+/* Contenuto dei filtri */
+.filters-content {
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.filters-section.collapsed .filters-content {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.filters-section.expanded .filters-content {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .filters-section h3 {
@@ -17,6 +49,26 @@
     margin-bottom: 1rem;
     color: var(--primary-color);
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Stili per il bottone toggle */
+.toggle-filters-btn {
+    background-color: var(--toggle-filters-btn);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.toggle-filters-btn:hover {
+    transform: translateY(-2px);
+}
+
+.toggle-filters-btn.active {
+    background-color: var(--toggle-filters-btn);
+    color: white;
 }
 
 .filters-grid {
@@ -161,10 +213,22 @@
     color: var(--toolbar-text-color);
 }
 
+.add-expense-btn {
+    background-color: #dc3545; /* Rosso per le uscite */
+    color: white;
+}
+
+.add-income-btn {
+    background-color: #28a745; /* Verde per le entrate */
+    color: white;
+}
+
 .export-btn:hover,
 .import-btn:hover,
 .template-btn:hover,
-.add-btn:hover {
+.add-btn:hover,
+.add-expense-btn:hover,
+.add-income-btn:hover {
     opacity: 0.9;
     transform: translateY(-2px);
 }
@@ -696,8 +760,8 @@ main {
         margin-bottom: 1.5rem;
     }
     
-    .add-btn {
-        grid-column: span 2;
+    .add-expense-btn,
+    .add-income-btn {
         background: var(--primary-color);
         color: white;
         font-weight: 600;
@@ -706,11 +770,33 @@ main {
         border-radius: 8px;
     }
     
+    .add-expense-btn {
+        background-color: #dc3545;
+    }
+    
+    .add-income-btn {
+        background-color: #28a745;
+    }
+    
+    .toggle-filters-btn {
+        grid-column: span 2;
+        order: 3;
+    }
+    
     .toolbar .btn {
         padding: 0.75rem;
         font-size: 0.9rem;
         border-radius: 8px;
         white-space: nowrap;
+    }
+    
+    /* Responsive filtri */
+    .filters-section.expanded {
+        max-height: 2000px; /* Più spazio per mobile */
+    }
+    
+    .filters-content {
+        padding: 1rem;
     }
     
     /* Responsive popup */

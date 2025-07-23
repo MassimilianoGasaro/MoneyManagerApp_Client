@@ -4,9 +4,12 @@ import { HandleExpenses } from './expensesFunction.js';
 import { ExcelService } from './excelService.js';
 import { TableManager } from './tableManager.js';
 import toast from "./toast.js";
+import { HandleTypologies } from "./handleTypes.js";
 
 // Istanza globale del servizio API
 const expensesService = new HandleExpenses();
+// Istanza globale del servizio per le tipologie
+const typologiesService = new HandleTypologies();
 
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
@@ -85,27 +88,129 @@ function populateTable(records) {
 }
 
 // Funzione per aprire il popup per aggiungere un nuovo record
-function openCreatePopup() {
+async function openCreatePopup() {
     console.log('Apertura del popup per aggiungere un nuovo record');
-    
-    // Usa l'istanza globale, creandola solo se non esiste
-    const popup = getPopupInstance("createPopup");
 
-    // Reset del form prima di configurare
-    popup.resetForm();
-
-    // Configura il popup per l'aggiunta
-    popup.show({
-        title: 'Aggiungi Record',
-        saveBtnText: 'Salva',
-        onSave: async () => {
-            await saveNewRecord();
-        },
-        onError: (error) => {
-            console.error('Errore durante il salvataggio:', error);
-            toast.error(`${error.message}`);
+    try {
+        // Chiamata per ottenere le tipologie
+        const res = await getExpenseTypes();
+        if (!res.success) {
+            toast.error(`${res.message}`);
+            return; 
         }
-    });
+
+        // Usa l'istanza globale, creandola solo se non esiste
+        const popup = getPopupInstance("createPopup");
+
+        // Reset del form prima di configurare
+        popup.resetForm();
+
+        // Configura il popup per l'aggiunta
+        popup.show({
+            title: 'Aggiungi Record',
+            saveBtnText: 'Salva',
+            onSave: async () => {
+                await saveNewRecord();
+            },
+            onError: (error) => {
+                console.error('Errore durante il salvataggio:', error);
+                toast.error(`${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie DOPO aver mostrato il popup
+        setTimeout(() => {
+            populateTypeSelect('createPopup', res.data || []);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup:', error);
+        toast.error('Errore durante il caricamento delle tipologie');
+    }
+}
+
+// Funzione per aprire il popup per aggiungere una spesa (uscita)
+async function openExpensePopup() {
+    console.log('Apertura del popup per aggiungere una spesa');
+
+    try {
+        // Chiamata per ottenere solo le tipologie di spesa
+        const res = await typologiesService.getExpenseTypologies();
+        if (!res.success) {
+            toast.error(`${res.message}`);
+            return; 
+        }
+
+        // Usa l'istanza globale, creandola solo se non esiste
+        const popup = getPopupInstance("createPopup");
+
+        // Reset del form prima di configurare
+        popup.resetForm();
+
+        // Configura il popup per l'aggiunta di una spesa
+        popup.show({
+            title: '💸 Aggiungi Uscita',
+            saveBtnText: 'Salva Uscita',
+            onSave: async () => {
+                await saveNewRecord();
+            },
+            onError: (error) => {
+                console.error('Errore durante il salvataggio:', error);
+                toast.error(`${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie di spesa DOPO aver mostrato il popup
+        setTimeout(() => {
+            populateTypeSelect('createPopup', res.data || []);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup per le spese:', error);
+        toast.error('Errore durante il caricamento delle tipologie di spesa');
+    }
+}
+
+// Funzione per aprire il popup per aggiungere un'entrata
+async function openIncomePopup() {
+    console.log('Apertura del popup per aggiungere un\'entrata');
+
+    try {
+        // Chiamata per ottenere solo le tipologie di entrata
+        const res = await typologiesService.getIncomeTypologies();
+        if (!res.success) {
+            toast.error(`${res.message}`);
+            return; 
+        }
+
+        // Usa l'istanza globale, creandola solo se non esiste
+        const popup = getPopupInstance("createPopup");
+
+        // Reset del form prima di configurare
+        popup.resetForm();
+
+        // Configura il popup per l'aggiunta di un'entrata
+        popup.show({
+            title: '💰 Aggiungi Entrata',
+            saveBtnText: 'Salva Entrata',
+            onSave: async () => {
+                await saveNewRecord();
+            },
+            onError: (error) => {
+                console.error('Errore durante il salvataggio:', error);
+                toast.error(`${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie di entrata DOPO aver mostrato il popup
+        setTimeout(() => {
+            populateTypeSelect('createPopup', res.data || []);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup per le entrate:', error);
+        toast.error('Errore durante il caricamento delle tipologie di entrata');
+    }
 }
 
 // Funzione separata per salvare un nuovo record
@@ -144,7 +249,7 @@ async function saveNewRecord() {
             name: formData.title, 
             amount: formData.amount, 
             description: formData.description || "", 
-            date: formData.date , 
+            date: formData.date, 
             type: formData.type
         };
 
@@ -166,26 +271,47 @@ async function saveNewRecord() {
 async function openEditPopup(recordId) {
     console.log('Apertura del popup per modificare record:', recordId);
 
-    // carica i dati del record prima di mostrare il popup
-    const data = await loadRecordData(recordId);
-    
-    // Usa la stessa istanza globale
-    const popup = getPopupInstance("updatePopup");
+    try {
+        // Carica i dati del record e le tipologie in parallelo
+        const [recordData, typesResponse] = await Promise.all([
+            loadRecordData(recordId),
+            getExpenseTypes()
+        ]);
 
-    // Configura il popup per la modifica
-    popup.show({
-        title: 'Modifica Record',
-        saveBtnText: 'Aggiorna',
-        onSave: async () => {
-            await updateRecord(recordId);
-        },
-        onError: (error) => {
-            console.error('Errore durante l\'aggiornamento:', error);
-            toast.error(`Errore: ${error.message}`);
+        if (!typesResponse.success) {
+            toast.error(`Errore nel caricamento delle tipologie: ${typesResponse.message}`);
+            return;
         }
-    });
-    
-    populateEditForm(data);
+
+        // Usa la stessa istanza globale
+        const popup = getPopupInstance("updatePopup");
+
+        // Configura il popup per la modifica
+        popup.show({
+            title: 'Modifica Record',
+            saveBtnText: 'Aggiorna',
+            onSave: async () => {
+                await updateRecord(recordId);
+            },
+            onError: (error) => {
+                console.error('Errore durante l\'aggiornamento:', error);
+                toast.error(`Errore: ${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie e il form DOPO aver mostrato il popup
+        setTimeout(() => {
+            // Prima popola la select con tutte le tipologie
+            populateTypeSelect('updatePopup', typesResponse.data || [], recordData.type);
+            
+            // Poi popola il resto del form
+            populateEditForm(recordData);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup di modifica:', error);
+        toast.error('Errore durante il caricamento dei dati');
+    }
 }
 
 // Funzione per caricare i dati di un record nel form (per la modifica)
@@ -201,6 +327,7 @@ async function loadRecordData(recordId) {
     } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
         toast.error('Errore nel caricamento dei dati del record');
+        throw error; // Rilancia l'errore per gestirlo nel chiamante
     }
 }
 
@@ -245,9 +372,13 @@ function populateEditForm(data) {
     }
     
     if (typeElement) {
-        typeElement.value = data.type || '';
-        typeElement.dispatchEvent(new Event('change', { bubbles: true }));
-        console.log("Type impostato:", typeElement.value);
+        // Il tipo dovrebbe già essere preselezionato dalla populateTypeSelect
+        // Ma forziamo la selezione se necessario
+        if (data.type) {
+            typeElement.value = data.type;
+            typeElement.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log("Type impostato:", typeElement.value);
+        }
     }
     
     if (dateElement) {
@@ -552,6 +683,82 @@ function showValidationErrors(invalidData) {
 
 // ===== FINE FUNZIONALITÀ EXCEL =====
 
+// Funzione per ottenere tutte le tipologie disponibili
+async function getExpenseTypes() {
+    try {
+        const response = await typologiesService.getTypologies();
+        return response;
+    } catch (error) {
+        console.error('Errore nel recupero delle tipologie:', error);
+        throw error;
+    }
+}
+
+// Funzione per ottenere solo le tipologie di spesa (uscite)
+async function getExpenseTypologies() {
+    try {
+        const response = await typologiesService.getExpenseTypologies();
+        return response;
+    } catch (error) {
+        console.error('Errore nel recupero delle tipologie di spesa:', error);
+        throw error;
+    }
+}
+
+// Funzione per ottenere solo le tipologie di entrata
+async function getIncomeTypologies() {
+    try {
+        const response = await typologiesService.getIncomeTypologies();
+        return response;
+    } catch (error) {
+        console.error('Errore nel recupero delle tipologie di entrata:', error);
+        throw error;
+    }
+}
+
+// Funzione per popolare la select delle tipologie
+function populateTypeSelect(popupId, types, selectedType = '') {
+    const popupElement = document.getElementById(popupId);
+    if (!popupElement) {
+        console.error(`Popup ${popupId} non trovato nel DOM`);
+        return;
+    }
+    
+    const typeSelect = popupElement.querySelector('#type-select');
+    if (!typeSelect) {
+        console.error('Select type-select non trovata nel popup');
+        return;
+    }
+    
+    // Pulisci le opzioni esistenti
+    typeSelect.innerHTML = '';
+    
+    // Aggiungi opzione di default
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '--Seleziona un tipo--';
+    typeSelect.appendChild(defaultOption);
+    
+    // Aggiungi le tipologie dalla API
+    if (types && types.length > 0) {
+        types.forEach(type => {
+            const option = document.createElement('option');
+            if (!type._id || type._id === '') return;
+            option.value = type._id || type.name;
+            option.textContent = type.name || type.description;
+            
+            // Seleziona l'opzione se corrisponde al tipo selezionato
+            if (selectedType && type._id === selectedType) {
+                option.selected = true;
+            }
+            
+            typeSelect.appendChild(option);
+        });
+    } 
+    
+    console.log(`Select popolata con ${types.length} tipologie in popup ${popupId}`);
+}
+
 // Inizializzazione dell'applicazione
 async function init() {
     // Carica header e footer
@@ -560,19 +767,70 @@ async function init() {
     // Carica i dati dalla API
     await loadData();
 
-    // Aggiungi evento per il pulsante "Aggiungi Record"
-    const addRecordBtn = document.querySelector('.add-btn');
-    if (addRecordBtn) {
-        addRecordBtn.removeEventListener('click', openCreatePopup); // Rimuovi eventuali listener esistenti
-        addRecordBtn.addEventListener('click', openCreatePopup);
-    } 
-    else console.error('Pulsante "Aggiungi Record" non trovato.');
+    // Aggiungi eventi per i pulsanti "Aggiungi Uscita" e "Aggiungi Entrata"
+    const addExpenseBtn = document.getElementById('add-expense-btn');
+    const addIncomeBtn = document.getElementById('add-income-btn');
+    
+    if (addExpenseBtn) {
+        addExpenseBtn.removeEventListener('click', openExpensePopup); // Rimuovi eventuali listener esistenti
+        addExpenseBtn.addEventListener('click', openExpensePopup);
+    } else {
+        console.error('Pulsante "Aggiungi Uscita" non trovato.');
+    }
+    
+    if (addIncomeBtn) {
+        addIncomeBtn.removeEventListener('click', openIncomePopup); // Rimuovi eventuali listener esistenti
+        addIncomeBtn.addEventListener('click', openIncomePopup);
+    } else {
+        console.error('Pulsante "Aggiungi Entrata" non trovato.');
+    }
     
     // Configura event listeners per la tabella
     setupTableEventListeners();
     
     // Inizializza funzionalità Excel
     initializeExcelFeatures();
+    
+    // Inizializza il toggle dei filtri
+    initializeFiltersToggle();
+}
+
+// Funzione per inizializzare il toggle dei filtri
+function initializeFiltersToggle() {
+    const toggleBtn = document.getElementById('toggle-filters');
+    const filtersSection = document.getElementById('filters-section');
+    
+    if (!toggleBtn || !filtersSection) {
+        console.error('Bottone toggle filtri o sezione filtri non trovati');
+        return;
+    }
+    
+    // Stato iniziale: collassato
+    let isExpanded = false;
+    
+    toggleBtn.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        
+        if (isExpanded) {
+            // Espandi i filtri
+            filtersSection.classList.remove('collapsed');
+            filtersSection.classList.add('expanded');
+            toggleBtn.textContent = '🔼 Nascondi Filtri';
+            toggleBtn.classList.add('active');
+        } else {
+            // Collassa i filtri
+            filtersSection.classList.remove('expanded');
+            filtersSection.classList.add('collapsed');
+            toggleBtn.textContent = '🔍 Mostra Filtri';
+            toggleBtn.classList.remove('active');
+        }
+        
+        console.log(`Filtri ${isExpanded ? 'espansi' : 'collassati'}`);
+    });
+    
+    // Imposta stato iniziale
+    filtersSection.classList.add('collapsed');
+    toggleBtn.textContent = '🔍 Mostra Filtri';
 }
 
 // Avvia l'applicazione quando il DOM è pronto

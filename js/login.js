@@ -58,13 +58,12 @@ async function handleRegister(event) {
         
         const response = await usersFunctions.register(body);
 
-        if (response.ok) {
+        if (response.success) {
             toast.success('Registrazione completata con successo!');
             // Cambia automaticamente al tab di login
             switchTab('login');
         } else {
-            const errorData = await response.json();
-            toast.error(errorData.message || 'Errore durante la registrazione');
+            toast.error(response.message || 'Errore durante la registrazione');
         }
 
     } catch (error) {
