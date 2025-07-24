@@ -215,9 +215,11 @@ export class TableManager {
 
         this.filteredData.forEach(record => {
             const row = document.createElement("tr");
+            row.style.backgroundColor = record.type?.type === 'expense' ? 
+                'var(--background-expense)' : 'var(--background-income)'; // Colore di sfondo per il tipo
             row.innerHTML = `
                 <td>${record.title || record.name || ''}</td>
-                <td>${record.amount ? record.amount.toFixed(2) : '0.00'}</td>
+                <td>${record.amount ? `€ ${record.amount.toFixed(2)}` : '€0.00'}</td>
                 <td>${record.date ? new Date(record.date).toLocaleDateString('it-IT') : ''}</td>
                 <td>${record.type?.name || ''}</td>
                 <td>

@@ -147,7 +147,12 @@ export class ExcelService {
      * @param {Array} data 
      * @returns {Object} - { valid: Array, invalid: Array }
      */
-    static validateImportData(data) {
+    /**
+     * Valida i dati importati
+     * @param {Array} data - Dati da validare
+     * @param {Array} typologies - Array delle tipologie disponibili per la validazione
+     */
+    static validateImportData(data, typologies = []) {
         const valid = [];
         const invalid = [];
         
@@ -165,6 +170,15 @@ export class ExcelService {
             
             if (!item.type || item.type.trim() === '') {
                 errors.push('Tipo mancante');
+            } else if (typologies.length > 0) {
+                // Verifica che la tipologia esista
+                const typologyExists = typologies.some(t => 
+                    t.name && t.name.toLowerCase() === item.type.toLowerCase()
+                );
+                
+                if (!typologyExists) {
+                    errors.push(`Tipologia "${item.type}" non trovata`);
+                }
             }
             
             if (errors.length > 0) {
@@ -183,18 +197,33 @@ export class ExcelService {
 
     /**
      * Genera un template Excel vuoto per l'importazione
+     * @param {Array} typologies - Array delle tipologie disponibili per esempi
      */
-    static generateTemplate() {
+    static generateTemplate(typologies = []) {
         try {
+            // Prendi la prima tipologia disponibile come esempio, oppure usa un default
+            const exampleType = typologies.length > 0 ? typologies[0].name : 'SpesaGenerica';
+            
             const templateData = [
                 {
                     'Titolo': 'Esempio spesa',
                     'Descrizione': 'Descrizione della spesa',
                     'Importo': 50.00,
-                    'Tipo': 'SpesaGenerica',
+                    'Tipo': exampleType,
                     'Data': new Date().toLocaleDateString('it-IT')
                 }
             ];
+
+            // Se ci sono più tipologie, aggiungi altri esempi
+            if (typologies.length > 1) {
+                templateData.push({
+                    'Titolo': 'Altra spesa di esempio',
+                    'Descrizione': 'Un\'altra descrizione',
+                    'Importo': 25.50,
+                    'Tipo': typologies[1].name,
+                    'Data': new Date().toLocaleDateString('it-IT')
+                });
+            }
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.json_to_sheet(templateData);
@@ -209,6 +238,23 @@ export class ExcelService {
             ];
             
             XLSX.utils.book_append_sheet(wb, ws, 'Template');
+            
+            // Se ci sono tipologie, crea un secondo foglio con la lista delle tipologie disponibili
+            if (typologies.length > 0) {
+                const typologiesData = typologies.map(t => ({
+                    'Nome Tipologia': t.name,
+                    'Descrizione': t.description || ''
+                }));
+                
+                const wsTypes = XLSX.utils.json_to_sheet(typologiesData);
+                wsTypes['!cols'] = [
+                    { wch: 20 }, // Nome
+                    { wch: 40 }  // Descrizione
+                ];
+                
+                XLSX.utils.book_append_sheet(wb, wsTypes, 'Tipologie Disponibili');
+            }
+            
             XLSX.writeFile(wb, 'template_import_spese.xlsx');
             
             return true;

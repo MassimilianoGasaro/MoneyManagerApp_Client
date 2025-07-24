@@ -135,7 +135,7 @@ async function openExpensePopup() {
 
     try {
         // Chiamata per ottenere solo le tipologie di spesa
-        const res = await typologiesService.getExpenseTypologies();
+        const res = await getExpenseTypologies();
         if (!res.success) {
             toast.error(`${res.message}`);
             return; 
@@ -177,7 +177,7 @@ async function openIncomePopup() {
 
     try {
         // Chiamata per ottenere solo le tipologie di entrata
-        const res = await typologiesService.getIncomeTypologies();
+        const res = await getIncomeTypologies();
         if (!res.success) {
             toast.error(`${res.message}`);
             return; 
@@ -275,7 +275,7 @@ async function openEditPopup(recordId) {
         // Carica i dati del record e le tipologie in parallelo
         const [recordData, typesResponse] = await Promise.all([
             loadRecordData(recordId),
-            getExpenseTypes()
+            getActiveTypologies()
         ]);
 
         if (!typesResponse.success) {
@@ -559,9 +559,13 @@ function initializeExcelFeatures() {
 
     // Template Excel
     if (templateBtn) {
-        templateBtn.addEventListener('click', () => {
+        templateBtn.addEventListener('click', async () => {
             try {
-                ExcelService.generateTemplate();
+                // Recupera le tipologie per creare un template più completo
+                const typologiesResponse = await getActiveTypologies();
+                const typologies = typologiesResponse.success ? typologiesResponse.data || [] : [];
+                
+                ExcelService.generateTemplate(typologies);
                 toast.success('Template Excel scaricato con successo!');
             } catch (error) {
                 console.error('Errore durante il download del template:', error);
@@ -592,8 +596,12 @@ function initializeExcelFeatures() {
                 return;
             }
 
-            // Valida i dati
-            const validation = ExcelService.validateImportData(importedData);
+            // Recupera le tipologie per la validazione
+            const typologiesResponse = await getActiveTypologies();
+            const typologies = typologiesResponse.success ? typologiesResponse.data || [] : [];
+            
+            // Valida i dati con le tipologie
+            const validation = ExcelService.validateImportData(importedData, typologies);
 
             console.log('Dati validati:', validation);
             
@@ -603,6 +611,8 @@ function initializeExcelFeatures() {
             
             if (validation.valid.length > 0) {
                 await importValidData(validation.valid);
+            } else if (validation.invalid.length > 0) {
+                toast.error(`Tutti i ${validation.invalid.length} record hanno errori di validazione`);
             }
             
         } catch (error) {
@@ -623,10 +633,27 @@ async function importValidData(validData) {
         
         toast.info(`Importazione di ${validData.length} record in corso...`);
         
+        // Recupera tutte le tipologie per la mappatura
+        const typologiesResponse = await getActiveTypologies();
+        if (!typologiesResponse.success) {
+            throw new Error('Impossibile recuperare le tipologie per la validazione');
+        }
+        
+        const typologies = typologiesResponse.data || [];
+        console.log('Tipologie disponibili per mappatura:', typologies);
+        
         for (let item of validData) {
             try {
-                await expensesService.addExpense(item);
-                successCount++;
+                // Mappa il nome della tipologia al suo ID
+                const mappedItem = await mapTypologyToId(item, typologies);
+                
+                if (mappedItem) {
+                    await expensesService.addExpense(mappedItem);
+                    successCount++;
+                } else {
+                    errorCount++;
+                    console.error('Tipologia non trovata per il record:', item);
+                }
             } catch (error) {
                 errorCount++;
                 console.error('Errore nell\'importazione del record:', error);
@@ -648,48 +675,64 @@ async function importValidData(validData) {
     }
 }
 
+// Funzione per mappare il nome della tipologia al suo ID
+async function mapTypologyToId(item, typologies) {
+    try {
+        // Cerca la tipologia per nome (case-insensitive)
+        const typology = typologies.find(t => 
+            t.name && t.name.toLowerCase() === item.type.toLowerCase()
+        );
+        
+        if (!typology) {
+            console.error(`Tipologia "${item.type}" non trovata`);
+            return null;
+        }
+        
+        // Ritorna l'item con l'ID della tipologia invece del nome
+        return {
+            name: item.name,
+            amount: item.amount,
+            description: item.description || "",
+            date: item.date,
+            type: typology._id // Usa l'ID invece del nome
+        };
+        
+    } catch (error) {
+        console.error('Errore nella mappatura della tipologia:', error);
+        return null;
+    }
+}
+
 // Funzione per mostrare errori di validazione
 function showValidationErrors(invalidData) {
-    // const popup = getPopupInstance('createPopup');
+    let errorMessage = `Trovati ${invalidData.length} errori di validazione:\n\n`;
     
-    // let errorHtml = '<div class="validation-errors">';
-    // errorHtml += '<h4>Errori di validazione trovati:</h4>';
+    invalidData.slice(0, 10).forEach(item => { // Mostra solo i primi 10 errori
+        errorMessage += `Riga ${item.row}: ${item.errors.join(', ')}\n`;
+    });
     
-    // invalidData.forEach(item => {
-    //     errorHtml += `<div class="error-item">`;
-    //     errorHtml += `<strong>Riga ${item.row}:</strong> ${item.errors.join(', ')}`;
-    //     errorHtml += `</div>`;
-    // });
+    if (invalidData.length > 10) {
+        errorMessage += `\n... e altri ${invalidData.length - 10} errori.`;
+    }
     
-    // errorHtml += '</div>';
-    // errorHtml += '<p>I record validi sono stati importati correttamente.</p>';
+    errorMessage += '\n\nI record validi sono stati importati correttamente.';
     
-    // popup.show({
-    //     title: 'Errori di Validazione',
-    //     saveBtnText: 'Chiudi',
-    //     onSave: () => {
-    //         // Non fare nulla, il popup si chiude automaticamente
-    //     }
-    // });
+    // Mostra il messaggio con un toast lungo
+    toast.error(errorMessage);
     
-    // // Sostituisci il contenuto del popup con gli errori
-    // const contentArea = popup.popup.querySelector('.popup-content');
-    // contentArea.innerHTML = errorHtml + `
-    //     <div class="form-actions">
-    //         <button type="button" class="btn confirm-btn">Chiudi</button>
-    //     </div>
-    // `;
+    // Log dettagliato in console per debug
+    console.error('Errori di validazione dettagliati:', invalidData);
 }
 
 // ===== FINE FUNZIONALITÀ EXCEL =====
 
-// Funzione per ottenere tutte le tipologie disponibili
-async function getExpenseTypes() {
+// Funzione per ottenere tutte le tipologie attive
+async function getActiveTypologies() {
     try {
         const response = await typologiesService.getTypologies();
         return response;
     } catch (error) {
-        console.error('Errore nel recupero delle tipologie:', error);
+        console.error('Errore nel recupero delle tipologie attive:', error);
         throw error;
     }
 }

@@ -9,7 +9,7 @@ export class HandleTypologies extends ApiService {
     console.log("Recupero tipologie");
         try {
 
-            const response = await fetch(this.endpoint, {
+            const response = await fetch(`${this.endpoint}/all`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
