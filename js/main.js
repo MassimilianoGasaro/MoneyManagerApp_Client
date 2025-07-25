@@ -14,6 +14,12 @@ const typologiesService = new HandleTypologies();
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
 
+// Imposta il callback per aggiornare le statistiche quando i dati cambiano
+tableManager.setOnDataChange(updateStatistics);
+
+// Esponi tableManager globalmente per debug
+window.tableManager = tableManager;
+
 // Istanze globali inizializzate a null
 let createPopup = null;
 let updatePopup = null;
@@ -81,10 +87,99 @@ async function fetchRecords() {
     }
 }
 
+// Funzione per aggiornare le statistiche nella barra
+function updateStatistics(records) {
+    // Elementi della barra statistiche
+    const totalRecordsEl = document.getElementById('stats-total-records');
+    const totalExpensesEl = document.getElementById('stats-total-expenses');
+    const totalIncomeEl = document.getElementById('stats-total-income');
+    const balanceEl = document.getElementById('stats-balance');
+    
+    if (!totalRecordsEl || !totalExpensesEl || !totalIncomeEl || !balanceEl) {
+        console.warn('Elementi della barra statistiche non trovati');
+        return;
+    }
+    
+    // Calcola le statistiche
+    const totalRecords = records.length;
+    let totalExpenses = 0;
+    let totalIncome = 0;
+    
+    records.forEach(record => {
+        const amount = parseFloat(record.amount) || 0;
+        if (record.type === 'uscita' || record.type === 'expense') {
+            totalExpenses += amount;
+        } else if (record.type === 'entrata' || record.type === 'income') {
+            totalIncome += amount;
+        }
+    });
+    
+    const balance = totalIncome - totalExpenses;
+    
+    // Aggiorna i valori con animazione
+    animateValue(totalRecordsEl, totalRecords, 0, 'number');
+    animateValue(totalExpensesEl, totalExpenses, 2, 'currency');
+    animateValue(totalIncomeEl, totalIncome, 2, 'currency');
+    animateValue(balanceEl, balance, 2, 'currency');
+    
+    // Aggiorna la classe del bilancio per il colore
+    balanceEl.classList.remove('positive', 'negative', 'zero');
+    if (balance > 0) {
+        balanceEl.classList.add('positive');
+    } else if (balance < 0) {
+        balanceEl.classList.add('negative');
+    } else {
+        balanceEl.classList.add('zero');
+    }
+}
+
+// Funzione per animare i valori numerici
+function animateValue(element, targetValue, decimals = 0, type = 'number') {
+    const currentValue = parseFloat(element.textContent.replace(/[€.,]/g, '')) || 0;
+    const difference = targetValue - currentValue;
+    const duration = 500; // ms
+    const steps = 30;
+    const stepValue = difference / steps;
+    const stepTime = duration / steps;
+    
+    let currentStep = 0;
+    
+    const timer = setInterval(() => {
+        currentStep++;
+        const newValue = currentValue + (stepValue * currentStep);
+        
+        if (currentStep >= steps) {
+            clearInterval(timer);
+            // Assicurati che il valore finale sia esatto
+            updateElementValue(element, targetValue, decimals, type);
+        } else {
+            updateElementValue(element, newValue, decimals, type);
+        }
+    }, stepTime);
+}
+
+// Funzione helper per aggiornare il valore dell'elemento
+function updateElementValue(element, value, decimals, type) {
+    let formattedValue;
+    
+    if (type === 'currency') {
+        formattedValue = '€' + value.toFixed(decimals).replace('.', ',');
+    } else if (type === 'number') {
+        formattedValue = Math.round(value).toString();
+    } else {
+        formattedValue = value.toFixed(decimals);
+    }
+    
+    element.textContent = formattedValue;
+}
+
 // Funzione per popolare la tabella
 function populateTable(records) {
     // Usa il TableManager per gestire i dati (sia tabella desktop che versione mobile)
     tableManager.setData(records);
+    
+    // Aggiorna le statistiche
+    updateStatistics(records);
 }
 
 // Funzione per aprire il popup per aggiungere un nuovo record
@@ -260,7 +355,7 @@ async function saveNewRecord() {
 
         toast.success('Record aggiunto con successo!');
 
-        await loadData(); // Ricarica i dati nella tabella
+        await loadData(true); // Ricarica i dati nella tabella, preservando le selezioni
 
     } catch (error) {
         throw error; // Rilancia per gestione in onError
@@ -439,7 +534,7 @@ async function updateRecord(recordId) {
         toast.success('Record aggiornato con successo!');
         
         // Ricarica i dati nella tabella
-        await loadData();
+        await loadData(true);
         
     } catch (error) {
         throw error; // Rilancia per gestione in onError
@@ -461,6 +556,14 @@ function setupTableEventListeners() {
                 deleteRecord(recordId);
             }
         });
+        
+        // Gestione checkbox righe
+        tableBody.addEventListener('change', (e) => {
+            if (e.target.classList.contains('row-checkbox')) {
+                tableManager.updateRowSelection(e.target);
+                tableManager.updateSelectionState();
+            }
+        });
     }
     
     // Event listeners per le mobile cards
@@ -475,6 +578,22 @@ function setupTableEventListeners() {
             } else if (e.target.classList.contains('delete-btn') && recordId) {
                 deleteRecord(recordId);
             }
+        });
+        
+        // Gestione checkbox mobile cards
+        mobileContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('row-checkbox')) {
+                tableManager.updateRowSelection(e.target);
+                tableManager.updateSelectionState();
+            }
+        });
+    }
+    
+    // Gestione checkbox "Seleziona tutto"
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', () => {
+            tableManager.toggleSelectAll();
         });
     }
 }
@@ -501,24 +620,111 @@ async function deleteRecord(recordId) {
                 
                 toast.success('Record eliminato con successo!');
                 
-                // Ricarica i dati nella tabella
-                await loadData();
+                // Pulisci selezioni e ricarica i dati nella tabella
+                tableManager.clearSelections();
+                await loadData(true); // Preserva le selezioni perché abbiamo già pulito
         
             } catch (error) {
                 throw error; // Rilancia per gestione in onError
             }
         },
         onError: (error) => {
-            console.error('Errore durante l\'aggiornamento:', error);
+            console.error('Errore durante l\'eliminazione:', error);
             toast.error(`Errore: ${error.message}`);
         }
     });
 }
 
+// Funzione per eliminazione multipla
+async function deleteSelectedRecords() {
+    const selectedIds = tableManager.getSelectedRecords();
+    
+    if (selectedIds.length === 0) {
+        toast.warning('Nessun record selezionato');
+        return;
+    }
+    
+    console.log('Conferma per eliminazione multipla di:', selectedIds);
+    
+    // Usa lo stesso popup di eliminazione singola
+    const popup = getPopupInstance("deletePopup");
+
+    // Configura il popup per l'eliminazione multipla
+    popup.show({
+        title: `Elimina ${selectedIds.length} Record`,
+        saveBtnText: `Elimina ${selectedIds.length} Record`,
+        onSave: async () => {
+            try {
+                toast.info(`Eliminazione di ${selectedIds.length} record in corso...`);
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                // Elimina tutti i record selezionati
+                for (const recordId of selectedIds) {
+                    try {
+                        const response = await expensesService.deleteExpenseById(recordId);
+                        if (response.success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            console.error(`Errore eliminazione record ${recordId}:`, response.message);
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        console.error(`Errore eliminazione record ${recordId}:`, error);
+                    }
+                }
+                
+                // Mostra risultati
+                if (successCount > 0) {
+                    toast.success(`${successCount} record eliminati con successo!`);
+                }
+                
+                if (errorCount > 0) {
+                    toast.warning(`${errorCount} record non sono stati eliminati`);
+                }
+                
+                // Pulisci selezioni e ricarica dati
+                tableManager.clearSelections();
+                await loadData(true); // Preserva le selezioni perché abbiamo già pulito
+        
+            } catch (error) {
+                throw error; // Rilancia per gestione in onError
+            }
+        },
+        onError: (error) => {
+            console.error('Errore durante l\'eliminazione multipla:', error);
+            toast.error(`Errore: ${error.message}`);
+        }
+    });
+    
+    // Personalizza il contenuto del popup per mostrare i dettagli
+    const popup_element = document.getElementById('deletePopup');
+    const content = popup_element.querySelector('.popup-content');
+    if (content) {
+        const existingP = content.querySelector('p');
+        if (existingP) {
+            existingP.innerHTML = `
+                Sei sicuro di voler eliminare <strong>${selectedIds.length}</strong> record selezionati?
+                <br><br>
+                <small>⚠️ Questa operazione non può essere annullata.</small>
+            `;
+        }
+    }
+}
+
 // Funzione per caricare i dati
-async function loadData() {
+async function loadData(preserveSelections = false) {
     const records = await fetchRecords();
     populateTable(records);
+    
+    // Pulisci le selezioni solo se esplicitamente richiesto
+    if (!preserveSelections) {
+        setTimeout(() => {
+            tableManager.clearSelections();
+        }, 100);
+    }
 }
 
 // ===== FUNZIONALITÀ EXCEL =====
@@ -662,7 +868,7 @@ async function importValidData(validData) {
         
         if (successCount > 0) {
             toast.success(`${successCount} record importati con successo!`);
-            await loadData(); // Ricarica la tabella
+            await loadData(); // Ricarica la tabella (nuovi dati, selezioni pulite)
         }
         
         if (errorCount > 0) {
@@ -802,10 +1008,29 @@ function populateTypeSelect(popupId, types, selectedType = '') {
     console.log(`Select popolata con ${types.length} tipologie in popup ${popupId}`);
 }
 
+// Funzione per inizializzare le statistiche
+function initializeStatistics() {
+    const totalRecordsEl = document.getElementById('stats-total-records');
+    const totalExpensesEl = document.getElementById('stats-total-expenses');
+    const totalIncomeEl = document.getElementById('stats-total-income');
+    const balanceEl = document.getElementById('stats-balance');
+    
+    if (totalRecordsEl) totalRecordsEl.textContent = '0';
+    if (totalExpensesEl) totalExpensesEl.textContent = '€0,00';
+    if (totalIncomeEl) totalIncomeEl.textContent = '€0,00';
+    if (balanceEl) {
+        balanceEl.textContent = '€0,00';
+        balanceEl.classList.add('zero');
+    }
+}
+
 // Inizializzazione dell'applicazione
 async function init() {
     // Carica header e footer
     getHeaderAndFooter();
+    
+    // Inizializza le statistiche a zero
+    initializeStatistics();
     
     // Carica i dati dalla API
     await loadData();
@@ -813,6 +1038,7 @@ async function init() {
     // Aggiungi eventi per i pulsanti "Aggiungi Uscita" e "Aggiungi Entrata"
     const addExpenseBtn = document.getElementById('add-expense-btn');
     const addIncomeBtn = document.getElementById('add-income-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
     
     if (addExpenseBtn) {
         addExpenseBtn.removeEventListener('click', openExpensePopup); // Rimuovi eventuali listener esistenti
@@ -828,6 +1054,13 @@ async function init() {
         console.error('Pulsante "Aggiungi Entrata" non trovato.');
     }
     
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.removeEventListener('click', deleteSelectedRecords); // Rimuovi eventuali listener esistenti
+        deleteSelectedBtn.addEventListener('click', deleteSelectedRecords);
+    } else {
+        console.error('Pulsante "Elimina Selezionati" non trovato.');
+    }
+    
     // Configura event listeners per la tabella
     setupTableEventListeners();
     
@@ -836,6 +1069,12 @@ async function init() {
     
     // Inizializza il toggle dei filtri
     initializeFiltersToggle();
+    
+    // Inizializza il FAB mobile
+    initializeMobileFAB();
+    
+    // Inizializza il FAB Excel
+    initializeExcelFAB();
 }
 
 // Funzione per inizializzare il toggle dei filtri
@@ -874,6 +1113,271 @@ function initializeFiltersToggle() {
     // Imposta stato iniziale
     filtersSection.classList.add('collapsed');
     toggleBtn.textContent = '🔍 Mostra Filtri';
+}
+
+// Funzione per inizializzare il FAB mobile
+function initializeMobileFAB() {
+    const fabMain = document.getElementById('fab-main');
+    const fabMenu = document.getElementById('fab-menu');
+    const fabOverlay = document.getElementById('fab-overlay');
+    const fabAddExpense = document.getElementById('fab-add-expense');
+    const fabAddIncome = document.getElementById('fab-add-income');
+    
+    if (!fabMain || !fabMenu || !fabOverlay) {
+        console.log('Elementi FAB non trovati nel DOM - probabilmente non su mobile');
+        return;
+    }
+    
+    let isExpanded = false;
+    
+    // Funzione per aprire/chiudere il menu FAB
+    function toggleFABMenu() {
+        isExpanded = !isExpanded;
+        
+        const fabExcelContainer = document.getElementById('fab-excel-container');
+        const fabExcelMain = document.getElementById('fab-excel-main');
+        const fabExcelMenu = document.getElementById('fab-excel-menu');
+        
+        if (isExpanded) {
+            // Apri il menu principale
+            fabMain.classList.add('expanded');
+            fabMenu.classList.add('expanded');
+            fabOverlay.classList.add('active');
+            fabMain.innerHTML = '✕'; // Icona di chiusura
+            
+            // Sposta il FAB Excel più in alto per evitare sovrapposizioni
+            if (fabExcelContainer) {
+                fabExcelContainer.classList.add('main-menu-open');
+            }
+            
+        } else {
+            // Chiudi il menu principale
+            fabMain.classList.remove('expanded');
+            fabMenu.classList.remove('expanded');
+            fabOverlay.classList.remove('active');
+            fabMain.innerHTML = '➕'; // Icona di aggiunta
+            
+            // Riporta il FAB Excel alla posizione originale
+            if (fabExcelContainer) {
+                fabExcelContainer.classList.remove('main-menu-open');
+            }
+        }
+        
+        console.log(`FAB menu ${isExpanded ? 'aperto' : 'chiuso'}`);
+        
+        // Aggiorna l'overlay se necessario
+        updateOverlayState();
+    }
+    
+    // Event listeners
+    fabMain.addEventListener('click', () => {
+        // Effetto ripple
+        fabMain.classList.add('clicked');
+        setTimeout(() => fabMain.classList.remove('clicked'), 600);
+        
+        toggleFABMenu();
+    });
+    fabOverlay.addEventListener('click', () => {
+        // Chiudi il menu principale se è aperto
+        if (isExpanded) {
+            toggleFABMenu();
+        }
+        
+        // Chiudi anche il menu Excel se è aperto
+        const fabExcelMain = document.getElementById('fab-excel-main');
+        const fabExcelMenu = document.getElementById('fab-excel-menu');
+        if (fabExcelMain && fabExcelMenu && fabExcelMenu.classList.contains('expanded')) {
+            fabExcelMain.classList.remove('expanded');
+            fabExcelMenu.classList.remove('expanded');
+            fabExcelMain.innerHTML = '📋';
+            
+            // Aggiorna l'overlay dopo aver chiuso il menu Excel
+            if (typeof window.updateOverlayState === 'function') {
+                setTimeout(() => window.updateOverlayState(), 100);
+            }
+        }
+    });
+    
+    // Collega i bottoni FAB alle funzioni esistenti
+    if (fabAddExpense) {
+        fabAddExpense.addEventListener('click', () => {
+            toggleFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                openExpensePopup(); // Apri il popup per le uscite
+            }, 300); // Piccolo delay per l'animazione
+        });
+    }
+    
+    if (fabAddIncome) {
+        fabAddIncome.addEventListener('click', () => {
+            toggleFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                openIncomePopup(); // Apri il popup per le entrate
+            }, 300); // Piccolo delay per l'animazione
+        });
+    }
+    
+    // Chiudi il menu quando si fa scroll (UX migliorata)
+    let scrollTimeout;
+    let lastScrollY = window.scrollY;
+    let isScrolling = false;
+    
+    window.addEventListener('scroll', () => {
+        const fabContainer = document.getElementById('fab-container');
+        const fabExcelContainer = document.getElementById('fab-excel-container');
+        const currentScrollY = window.scrollY;
+        
+        // Chiudi i menu aperti durante lo scroll
+        if (isExpanded) {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                toggleFABMenu();
+            }, 150);
+        }
+        
+        // Auto-hide dei FAB durante lo scroll verso il basso
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Scroll verso il basso - nascondi i FAB
+            if (fabContainer) fabContainer.classList.add('hidden');
+            if (fabExcelContainer) fabExcelContainer.classList.add('hidden');
+        } else {
+            // Scroll verso l'alto o fermo - mostra i FAB
+            if (fabContainer) fabContainer.classList.remove('hidden');
+            if (fabExcelContainer) fabExcelContainer.classList.remove('hidden');
+        }
+        
+        lastScrollY = currentScrollY;
+        
+        // Reset dell'auto-hide dopo 3 secondi di inattività
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            if (fabContainer) fabContainer.classList.remove('hidden');
+            if (fabExcelContainer) fabExcelContainer.classList.remove('hidden');
+        }, 3000);
+    });
+    
+    // Animazione di pulsazione iniziale per attirare l'attenzione
+    setTimeout(() => {
+        fabMain.classList.add('pulse');
+        setTimeout(() => {
+            fabMain.classList.remove('pulse');
+        }, 4000); // Rimuovi dopo 4 secondi
+    }, 1000); // Inizia dopo 1 secondo
+    
+    console.log('FAB mobile inizializzato con successo');
+    
+    // Funzione per aggiornare lo stato dell'overlay
+    function updateOverlayState() {
+        const fabOverlay = document.getElementById('fab-overlay');
+        const fabMenu = document.getElementById('fab-menu');
+        const fabExcelMenu = document.getElementById('fab-excel-menu');
+        
+        if (!fabOverlay) return;
+        
+        const mainMenuOpen = fabMenu && fabMenu.classList.contains('expanded');
+        const excelMenuOpen = fabExcelMenu && fabExcelMenu.classList.contains('expanded');
+        
+        if (mainMenuOpen || excelMenuOpen) {
+            fabOverlay.classList.add('active');
+            
+            // Aggiungi classe speciale se entrambi i menu sono aperti
+            if (mainMenuOpen && excelMenuOpen) {
+                fabOverlay.classList.add('multiple-menus');
+            } else {
+                fabOverlay.classList.remove('multiple-menus');
+            }
+        } else {
+            fabOverlay.classList.remove('active', 'multiple-menus');
+        }
+    }
+    
+    // Esponi la funzione globalmente per l'uso in altri FAB
+    window.updateOverlayState = updateOverlayState;
+}
+
+// Funzione per inizializzare il FAB Excel
+function initializeExcelFAB() {
+    const fabExcelMain = document.getElementById('fab-excel-main');
+    const fabExcelMenu = document.getElementById('fab-excel-menu');
+    const fabExportExcel = document.getElementById('fab-export-excel');
+    const fabImportExcel = document.getElementById('fab-import-excel');
+    const fabDownloadTemplate = document.getElementById('fab-download-template');
+    
+    if (!fabExcelMain || !fabExcelMenu) {
+        console.log('Elementi FAB Excel non trovati nel DOM - probabilmente non su mobile');
+        return;
+    }
+    
+    let isExcelExpanded = false;
+    
+    // Funzione per aprire/chiudere il menu FAB Excel
+    function toggleExcelFABMenu() {
+        isExcelExpanded = !isExcelExpanded;
+        
+        if (isExcelExpanded) {
+            // Apri il menu Excel
+            fabExcelMain.classList.add('expanded');
+            fabExcelMenu.classList.add('expanded');
+            fabExcelMain.innerHTML = '✕'; // Icona di chiusura
+        } else {
+            // Chiudi il menu Excel
+            fabExcelMain.classList.remove('expanded');
+            fabExcelMenu.classList.remove('expanded');
+            fabExcelMain.innerHTML = '📋'; // Icona Excel
+        }
+        
+        console.log(`FAB Excel menu ${isExcelExpanded ? 'aperto' : 'chiuso'}`);
+        
+        // Aggiorna l'overlay se necessario
+        if (typeof window.updateOverlayState === 'function') {
+            window.updateOverlayState();
+        }
+    }
+    
+    // Event listeners
+    fabExcelMain.addEventListener('click', () => {
+        // Effetto ripple
+        fabExcelMain.classList.add('clicked');
+        setTimeout(() => fabExcelMain.classList.remove('clicked'), 600);
+        
+        toggleExcelFABMenu();
+    });
+    
+    // Collega i bottoni FAB Excel alle funzioni esistenti
+    if (fabExportExcel) {
+        fabExportExcel.addEventListener('click', () => {
+            toggleExcelFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                // Trigger dell'evento click sul bottone desktop
+                document.getElementById('export-excel')?.click();
+            }, 200);
+        });
+    }
+    
+    if (fabImportExcel) {
+        fabImportExcel.addEventListener('click', () => {
+            toggleExcelFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                // Trigger dell'evento click sul bottone desktop
+                document.getElementById('import-excel')?.click();
+            }, 200);
+        });
+    }
+    
+    if (fabDownloadTemplate) {
+        fabDownloadTemplate.addEventListener('click', () => {
+            toggleExcelFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                // Trigger dell'evento click sul bottone desktop
+                document.getElementById('download-template')?.click();
+            }, 200);
+        });
+    }
+    
+    // Chiudi il menu Excel quando si apre il menu principale e viceversa
+    // (questa logica è già gestita nelle funzioni toggle)
+    
+    console.log('FAB Excel inizializzato con successo');
 }
 
 // Avvia l'applicazione quando il DOM è pronto

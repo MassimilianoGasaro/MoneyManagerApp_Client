@@ -12,9 +12,6 @@ export class TableManager {
             amountMax: ''
         };
         
-        // Callback per notificare cambiamenti nei dati
-        this.onDataChange = null;
-        
         this.initializeEventListeners();
     }
 
@@ -23,11 +20,6 @@ export class TableManager {
         this.originalData = [...data];
         this.filteredData = [...data];
         this.applyFiltersAndSort();
-    }
-
-    // Imposta il callback per notificare cambiamenti nei dati
-    setOnDataChange(callback) {
-        this.onDataChange = callback;
     }
 
     // Inizializza gli event listeners
@@ -174,13 +166,10 @@ export class TableManager {
         this.updateTable();
         this.updateFilterInfo();
         
-        // Notifica il cambiamento dei dati se c'è un callback
-        if (this.onDataChange && typeof this.onDataChange === 'function') {
-            this.onDataChange(this.filteredData);
-        }
-        
-        // Le selezioni vengono gestite direttamente in updateTable()
-        // Non pulire automaticamente qui per permettere il mantenimento delle selezioni
+        // Pulisci le selezioni quando cambiano i filtri
+        setTimeout(() => {
+            this.clearSelections();
+        }, 100);
     }
 
     // Toggle ordinamento per colonna
@@ -231,19 +220,11 @@ export class TableManager {
         document.getElementById('amount-max').value = '';
 
         this.applyFiltersAndSort();
-        
-        // Pulisci le selezioni quando vengono resettati i filtri
-        setTimeout(() => {
-            this.clearSelections();
-        }, 100);
     }
 
     updateTable() {
         const tableBody = document.querySelector(".styled-table tbody");
         if (!tableBody) return;
-
-        // Salva lo stato delle selezioni prima di ricreare la tabella
-        const selectedIds = this.getSelectedRecords();
 
         tableBody.innerHTML = '';
 
@@ -251,13 +232,9 @@ export class TableManager {
             const row = document.createElement("tr");
             row.style.backgroundColor = record.type?.type === 'expense' ? 
                 'var(--background-expense)' : 'var(--background-income)'; // Colore di sfondo per il tipo
-            
-            // Controlla se questo record era selezionato
-            const isSelected = selectedIds.includes(record._id);
-            
             row.innerHTML = `
                 <td class="checkbox-column">
-                    <input type="checkbox" class="row-checkbox" data-id="${record._id}" ${isSelected ? 'checked' : ''}>
+                    <input type="checkbox" class="row-checkbox" data-id="${record._id}">
                 </td>
                 <td>${record.title || record.name || ''}</td>
                 <td>${record.amount ? `€ ${record.amount.toFixed(2)}` : '€0.00'}</td>
@@ -268,27 +245,15 @@ export class TableManager {
                     <button class="btn delete-btn" data-id="${record._id}">🗑️ Elimina</button>
                 </td>
             `;
-            
-            // Applica lo stile di selezione se necessario
-            if (isSelected) {
-                row.classList.add('selected');
-            }
-            
             tableBody.appendChild(row);
         });
         
         // Aggiorna anche le mobile cards
-        this.updateMobileCards(selectedIds);
-        
-        // Aggiorna lo stato delle selezioni dopo aver ricreato la tabella
-        // Usa requestAnimationFrame per assicurarsi che il DOM sia completamente aggiornato
-        requestAnimationFrame(() => {
-            this.updateSelectionState();
-        });
+        this.updateMobileCards();
     }
     
     // Aggiorna le mobile cards
-    updateMobileCards(selectedIds = []) {
+    updateMobileCards() {
         const mobileContainer = document.getElementById('mobile-table-container');
         if (!mobileContainer) return;
         
@@ -309,25 +274,20 @@ export class TableManager {
         }
         
         const cardsHtml = this.filteredData.map(record => {
-            const typeClass = record.type.type === 'expense' ? 'expense' : 'income';
-            const typeIcon = record.type.type === 'expense' ? '💸' : '💰';
-
-            // Controlla se questo record era selezionato
-            const isSelected = selectedIds.includes(record._id);
-            const selectedClass = isSelected ? 'selected' : '';
-            const checkedAttr = isSelected ? 'checked' : '';
+            const typeClass = record.type === 'SpesaGenerica' ? 'spesa' : 'entrata';
+            const typeIcon = record.type === 'SpesaGenerica' ? '💸' : '💰';
             
             return `
-                <div class="mobile-card ${selectedClass}" data-type="${record.type.type}">
-                    <input type="checkbox" class="mobile-card-checkbox row-checkbox" data-id="${record._id}" ${checkedAttr}>
+                <div class="mobile-card" data-type="${record.type}">
+                    <input type="checkbox" class="mobile-card-checkbox row-checkbox" data-id="${record._id}">
                     <div class="mobile-card-header">
                         <div>
                             <div class="mobile-card-title">${record.title || record.name || ''}</div>
                             <div class="type-badge ${typeClass}">
-                                ${typeIcon} ${record.type.name || ''}
+                                ${typeIcon} ${record.type || ''}
                             </div>
                         </div>
-                        <div class="mobile-card-amount ${typeClass}">€${record.amount ? record.amount.toFixed(2) : '0.00'}</div>
+                        <div class="mobile-card-amount">€${record.amount ? record.amount.toFixed(2) : '0.00'}</div>
                     </div>
                     
                     <div class="mobile-card-details">
@@ -414,7 +374,6 @@ export class TableManager {
             if (id) selectedIds.push(id);
         });
         
-        console.log(`GetSelectedRecords: trovati ${selectedIds.length} record selezionati:`, selectedIds);
         return selectedIds;
     }
     
@@ -423,19 +382,13 @@ export class TableManager {
         const selectAllCheckbox = document.getElementById('select-all-checkbox');
         const isChecked = selectAllCheckbox?.checked || false;
         
-        console.log(`ToggleSelectAll: impostando tutte le checkbox a ${isChecked}`);
-        
         // Aggiorna tutte le checkbox
-        const allCheckboxes = document.querySelectorAll('.row-checkbox');
-        allCheckboxes.forEach(checkbox => {
+        document.querySelectorAll('.row-checkbox').forEach(checkbox => {
             checkbox.checked = isChecked;
             this.updateRowSelection(checkbox);
         });
         
-        // Aggiorna lo stato dopo un piccolo delay per assicurarsi che tutti i DOM updates siano completati
-        setTimeout(() => {
-            this.updateSelectionState();
-        }, 10);
+        this.updateSelectionState();
     }
     
     // Aggiorna lo stato visivo della riga selezionata
@@ -465,50 +418,38 @@ export class TableManager {
     
     // Aggiorna lo stato generale delle selezioni
     updateSelectionState() {
-        // Usa un piccolo delay per assicurarsi che il DOM sia aggiornato
-        requestAnimationFrame(() => {
-            const allCheckboxes = document.querySelectorAll('.row-checkbox');
-            const checkedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-            const selectAllCheckbox = document.getElementById('select-all-checkbox');
-            const deleteSelectedBtn = document.getElementById('delete-selected-btn');
-            
-            console.log(`UpdateSelectionState: ${checkedCheckboxes.length}/${allCheckboxes.length} checkbox selezionate`);
-            
-            // Aggiorna checkbox "Seleziona tutto"
-            if (selectAllCheckbox) {
-                if (checkedCheckboxes.length === 0) {
-                    selectAllCheckbox.indeterminate = false;
-                    selectAllCheckbox.checked = false;
-                } else if (checkedCheckboxes.length === allCheckboxes.length && allCheckboxes.length > 0) {
-                    selectAllCheckbox.indeterminate = false;
-                    selectAllCheckbox.checked = true;
-                } else {
-                    selectAllCheckbox.indeterminate = true;
-                    selectAllCheckbox.checked = false;
-                }
+        const allCheckboxes = document.querySelectorAll('.row-checkbox');
+        const checkedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+        
+        // Aggiorna checkbox "Seleziona tutto"
+        if (selectAllCheckbox) {
+            if (checkedCheckboxes.length === 0) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = false;
+            } else if (checkedCheckboxes.length === allCheckboxes.length) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = true;
+            } else {
+                selectAllCheckbox.indeterminate = true;
+                selectAllCheckbox.checked = false;
             }
-            
-            // Mostra/nascondi bottone eliminazione multipla
-            if (deleteSelectedBtn) {
-                if (checkedCheckboxes.length > 0) {
-                    deleteSelectedBtn.style.display = 'inline-block';
-                    deleteSelectedBtn.textContent = `🗑️ Elimina Selezionati (${checkedCheckboxes.length})`;
-                } else {
-                    deleteSelectedBtn.style.display = 'none';
-                }
+        }
+        
+        // Mostra/nascondi bottone eliminazione multipla
+        if (deleteSelectedBtn) {
+            if (checkedCheckboxes.length > 0) {
+                deleteSelectedBtn.style.display = 'inline-block';
+                deleteSelectedBtn.textContent = `🗑️ Elimina Selezionati (${checkedCheckboxes.length})`;
+            } else {
+                deleteSelectedBtn.style.display = 'none';
             }
-            
-            // Aggiorna il badge del FAB mobile se disponibile
-            if (typeof window.updateFABBadge === 'function') {
-                window.updateFABBadge(checkedCheckboxes.length);
-            }
-        });
+        }
     }
     
     // Deseleziona tutto
     clearSelections() {
-        console.log('ClearSelections: pulendo tutte le selezioni');
-        
         document.querySelectorAll('.row-checkbox').forEach(checkbox => {
             checkbox.checked = false;
             this.updateRowSelection(checkbox);
@@ -521,36 +462,5 @@ export class TableManager {
         }
         
         this.updateSelectionState();
-    }
-
-    // Metodo di debug per ispezionare lo stato delle selezioni
-    debugSelectionState() {
-        const allCheckboxes = document.querySelectorAll('.row-checkbox');
-        const checkedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-        const selectAllCheckbox = document.getElementById('select-all-checkbox');
-        const deleteSelectedBtn = document.getElementById('delete-selected-btn');
-        
-        console.log('=== DEBUG SELECTION STATE ===');
-        console.log('Total checkboxes:', allCheckboxes.length);
-        console.log('Checked checkboxes:', checkedCheckboxes.length);
-        console.log('Select all checkbox state:', {
-            checked: selectAllCheckbox?.checked,
-            indeterminate: selectAllCheckbox?.indeterminate
-        });
-        console.log('Delete button text:', deleteSelectedBtn?.textContent);
-        console.log('Delete button visible:', deleteSelectedBtn?.style.display !== 'none');
-        console.log('Selected IDs:', this.getSelectedRecords());
-        console.log('============================');
-        
-        return {
-            totalCheckboxes: allCheckboxes.length,
-            checkedCheckboxes: checkedCheckboxes.length,
-            selectAllState: {
-                checked: selectAllCheckbox?.checked,
-                indeterminate: selectAllCheckbox?.indeterminate
-            },
-            deleteButtonText: deleteSelectedBtn?.textContent,
-            selectedIds: this.getSelectedRecords()
-        };
     }
 }

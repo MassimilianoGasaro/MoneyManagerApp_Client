@@ -2,7 +2,121 @@
 @import url("variables.css");
 @import url("popup.css");
 
-/* Sezione Filtri */
+/* ============================================================
+   BARRA STATISTICHE
+============================================================ */
+.stats-bar {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin: 15px 20px;
+    padding: 15px 20px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    animation: slideInDown 0.5s ease;
+}
+
+.stats-bar:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.stats-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.stats-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.stats-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+#stats-balance {
+    transition: color 0.3s ease;
+}
+
+#stats-balance.positive {
+    color: #28a745;
+}
+
+#stats-balance.negative {
+    color: #dc3545;
+}
+
+#stats-balance.zero {
+    color: #6c757d;
+}
+
+/* Mobile responsiveness per la barra statistiche */
+@media (max-width: 768px) {
+    .stats-bar {
+        margin: 10px 15px;
+        padding: 12px 16px;
+        gap: 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .stats-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stats-item {
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .stats-label {
+        font-size: 12px;
+    }
+
+    .stats-value {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-bar {
+        margin: 8px 10px;
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .stats-item {
+        min-width: 70px;
+    }
+
+    .stats-label {
+        font-size: 11px;
+    }
+
+    .stats-value {
+        font-size: 13px;
+    }
+}
+
+/* ============================================================
+   SEZIONE FILTRI
+============================================================ */
 .filters-section {
     background-color: var(--background-secondary);
     border: 1px solid var(--border-color);
@@ -189,13 +303,109 @@
     flex-wrap: wrap;
 }
 
-.toolbar>.btn {
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
+/* Barra delle statistiche */
+.stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, var(--background-secondary), #f8f9fa);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(0, 123, 255, 0.05), transparent);
+    pointer-events: none;
+}
+
+.stats-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.stats-item:hover {
+    background: rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    font-size: 1.2rem;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.stats-label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.stats-value {
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    background: var(--primary-color);
+    color: white;
+    min-width: 2.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stats-value.expense {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.stats-value.income {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.stats-value.balance {
+    background: linear-gradient(135deg, #6f42c1, #5a2d91);
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.stats-value.balance.positive {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.stats-value.balance.negative {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.stats-value.balance.zero {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+/* Animazione per gli aggiornamenti */
+.stats-value.updating {
+    animation: stats-pulse 0.6s ease-in-out;
+}
+
+@keyframes stats-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); background: #ffc107; }
+    100% { transform: scale(1); }
 }
 
 .export-btn {
@@ -223,14 +433,21 @@
     color: white;
 }
 
-.export-btn:hover,
-.import-btn:hover,
-.template-btn:hover,
-.add-btn:hover,
-.add-expense-btn:hover,
-.add-income-btn:hover {
-    opacity: 0.9;
+.delete-selected-btn {
+    background-color: #dc3545; /* Rosso per eliminazione */
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.delete-selected-btn:hover {
+    background-color: #c82333;
     transform: translateY(-2px);
+}
+
+.delete-selected-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Popup per validation errors */
@@ -304,12 +521,12 @@ main {
 }
 
 .edit-btn {
-    background-color: #28a745;
+    background-color: var(--background-edit-btn);
     color: white;
 }
 
 .delete-btn {
-    background-color: #dc3545;
+    background-color: var(--background-delete-btn);
     color: white;
 }
 
@@ -602,11 +819,11 @@ main {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.mobile-card[data-type="SpesaGenerica"] {
+.mobile-card[data-type="expense"] {
     border-left-color: #dc3545;
 }
 
-.mobile-card[data-type="Entrata"] {
+.mobile-card[data-type="income"] {
     border-left-color: #28a745;
 }
 
@@ -628,9 +845,14 @@ main {
 .mobile-card-amount {
     font-size: 1.4rem;
     font-weight: 700;
-    color: #dc3545;
     text-align: right;
     min-width: 100px;
+}
+.mobile-card-amount.expense {
+    color: #dc3545;
+}
+.mobile-card-amount.income {
+    color: #28a745;
 }
 
 .mobile-card-details {
@@ -698,11 +920,11 @@ main {
     margin-top: 0.25rem;
 }
 
-.type-badge.spesa {
+.type-badge.expense {
     background: #dc3545;
 }
 
-.type-badge.entrata {
+.type-badge.income {
     background: #28a745;
 }
 
@@ -760,27 +982,25 @@ main {
         margin-bottom: 1.5rem;
     }
     
+    /* Nascondi i bottoni Aggiungi e Excel su mobile - saranno sostituiti dai FAB */
     .add-expense-btn,
-    .add-income-btn {
-        background: var(--primary-color);
-        color: white;
-        font-weight: 600;
-        padding: 1rem;
-        font-size: 1.1rem;
-        border-radius: 8px;
+    .add-income-btn,
+    .export-btn,
+    .import-btn,
+    .template-btn {
+        display: none !important;
     }
     
-    .add-expense-btn {
+    .delete-selected-btn {
+        grid-column: span 2;
         background-color: #dc3545;
-    }
-    
-    .add-income-btn {
-        background-color: #28a745;
+        color: white;
+        order: 1;
     }
     
     .toggle-filters-btn {
         grid-column: span 2;
-        order: 3;
+        order: 2;
     }
     
     .toolbar .btn {
@@ -805,4 +1025,516 @@ main {
         max-width: 500px;
         margin: 2rem auto;
     }
+}
+
+/* Stili per le checkbox di selezione multipla */
+.checkbox-column {
+    width: 40px;
+    text-align: center;
+}
+
+.checkbox-column input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.row-checkbox {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+/* Stili per le righe selezionate */
+.styled-table tbody tr.selected {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.styled-table tbody tr.selected:hover {
+    background-color: rgba(0, 123, 255, 0.15);
+}
+
+/* Stili per le mobile cards selezionate */
+.mobile-card.selected {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.mobile-card-checkbox {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.mobile-card {
+    position: relative;
+    padding-right: 40px; /* Spazio per la checkbox */
+}
+
+/* ===== FAB (Floating Action Button) Mobile ===== */
+.fab-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: none; /* Nascosto su desktop */
+}
+
+.fab-main {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.fab-main:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0, 123, 255, 0.4);
+}
+
+.fab-main.expanded {
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.fab-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2));
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.fab-main:hover::before {
+    opacity: 1;
+}
+
+.fab-menu {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-menu.expanded {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-option {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transform: scale(0);
+}
+
+.fab-option.expense {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.fab-option.income {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.fab-menu.expanded .fab-option {
+    transform: scale(1);
+}
+
+.fab-menu.expanded .fab-option:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.fab-menu.expanded .fab-option:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.fab-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fab-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2));
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.fab-option:hover::before {
+    opacity: 1;
+}
+
+/* Tooltip per i FAB */
+.fab-option {
+    position: relative;
+}
+
+.fab-option::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+.fab-option:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(-5px);
+}
+
+/* Overlay per chiudere il menu */
+.fab-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 999;
+    display: none;
+}
+
+.fab-overlay.active {
+    display: block;
+}
+
+/* Overlay con stato multiplo quando entrambi i menu sono aperti */
+.fab-overlay.multiple-menus {
+    background: rgba(0, 0, 0, 0.1); /* Leggera tinta per indicare più menu aperti */
+}
+
+/* Animazione di pulsazione per attirare l'attenzione */
+@keyframes fab-pulse {
+    0% {
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.6), 0 0 0 10px rgba(0, 123, 255, 0.1);
+    }
+    100% {
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    }
+}
+
+.fab-main.pulse {
+    animation: fab-pulse 2s infinite;
+}
+
+/* Responsivo - mostra solo su mobile */
+@media (max-width: 768px) {
+    .fab-container {
+        display: block;
+    }
+}
+
+/* ===== FAB Excel (secondo FAB) ===== */
+.fab-excel-container {
+    position: fixed;
+    bottom: 90px; /* Posizionato sopra il FAB principale */
+    right: 20px;
+    z-index: 1000;
+    display: none; /* Nascosto su desktop */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Transizione fluida per il movimento */
+}
+
+/* Quando il menu principale è aperto, sposta il FAB Excel più in alto */
+.fab-excel-container.main-menu-open {
+    bottom: 220px; /* Spostato molto più in alto per evitare sovrapposizioni */
+}
+
+.fab-excel-main {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Transizione fluida anche per il FAB */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Quando il FAB Excel si sposta, mantiene una transizione fluida */
+.fab-excel-container.main-menu-open .fab-excel-main {
+    box-shadow: 0 3px 15px rgba(40, 167, 69, 0.4); /* Shadow più pronunciata quando spostato */
+}
+
+/* Indicatore visivo per il FAB Excel quando è spostato */
+.fab-excel-container.main-menu-open .fab-excel-main::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #28a745, #20c997, #28a745);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.3;
+    animation: fab-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes fab-glow {
+    from { transform: scale(1); opacity: 0.3; }
+    to { transform: scale(1.1); opacity: 0.1; }
+}
+
+.fab-excel-main:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+}
+
+.fab-excel-main.expanded {
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.fab-excel-menu {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Aggiusta il posizionamento del menu Excel quando il FAB principale è aperto */
+.fab-excel-container.main-menu-open .fab-excel-menu {
+    bottom: 60px; /* Mantiene la distanza relativa dal FAB Excel */
+}
+
+.fab-excel-menu.expanded {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-excel-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0);
+}
+
+.fab-excel-option.export {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.fab-excel-option.import {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+.fab-excel-option.template {
+    background: linear-gradient(135deg, #6f42c1, #5a2d91);
+}
+
+.fab-excel-menu.expanded .fab-excel-option {
+    transform: scale(1);
+}
+
+.fab-excel-menu.expanded .fab-excel-option:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.fab-excel-menu.expanded .fab-excel-option:nth-child(2) {
+    transition-delay: 0.15s;
+}
+
+.fab-excel-menu.expanded .fab-excel-option:nth-child(3) {
+    transition-delay: 0.2s;
+}
+
+.fab-excel-option:hover {
+    transform: scale(1.1);
+}
+
+/* Tooltip per FAB Excel */
+.fab-excel-option::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: 50px; /* Allineato a destra come il FAB principale */
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+.fab-excel-option:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(-5px);
+}
+
+@media (max-width: 768px) {
+    .fab-container,
+    .fab-excel-container {
+        display: block;
+    }
+}
+
+/* Animazioni FAB */
+@keyframes fab-enter {
+    0% {
+        transform: scale(0) rotate(180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(90deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.fab-main,
+.fab-excel-main {
+    animation: fab-enter 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.fab-excel-main {
+    animation-delay: 0.2s; /* Appare leggermente dopo il FAB principale */
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+/* Animazione per quando i FAB si nascondono durante lo scroll */
+.fab-container.hidden,
+.fab-excel-container.hidden {
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+/* Effetto ripple al click */
+.fab-main::after,
+.fab-excel-main::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.fab-main.clicked::after,
+.fab-excel-main.clicked::after {
+    width: 120px;
+    height: 120px;
+}
+
+/* Badge per le selezioni attive */
+.fab-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: bold;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    animation: badge-bounce 0.3s ease;
+}
+
+.fab-badge.visible {
+    display: flex;
+}
+
+@keyframes badge-bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }

@@ -24,14 +24,36 @@
 
     <!-- Main -->
     <main>
+        <!-- Toolbar -->
         <div class="toolbar">
             <button class="btn add-expense-btn" id="add-expense-btn">💸 Aggiungi Uscita</button>
             <button class="btn add-income-btn" id="add-income-btn">💰 Aggiungi Entrata</button>
+            <button class="btn delete-selected-btn" id="delete-selected-btn" style="display: none;">🗑️ Elimina Selezionati</button>
             <button class="btn toggle-filters-btn" id="toggle-filters">🔍 Mostra Filtri</button>
             <button class="btn export-btn" id="export-excel">📊 Esporta Excel</button>
             <button class="btn import-btn" id="import-excel">📂 Importa Excel</button>
             <button class="btn template-btn" id="download-template">📄 Scarica Template</button>
             <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display: none;">
+        </div>
+        
+        <!-- Barra Statistiche -->
+        <div class="stats-bar" id="stats-bar">
+            <div class="stats-item">
+                <span class="stats-label">📊 Totale Record:</span>
+                <span class="stats-value" id="stats-total-records">0</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">💸 Uscite:</span>
+                <span class="stats-value" id="stats-total-expenses">€0.00</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">💰 Entrate:</span>
+                <span class="stats-value" id="stats-total-income">€0.00</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">📈 Bilancio:</span>
+                <span class="stats-value" id="stats-balance">€0.00</span>
+            </div>
         </div>
         
         <!-- Sezione Filtri -->
@@ -78,6 +100,9 @@
         <table class="styled-table">
             <thead>
                 <tr>
+                    <th class="checkbox-column">
+                        <input type="checkbox" id="select-all-checkbox" title="Seleziona tutto">
+                    </th>
                     <th class="sortable" data-column="title">
                         Titolo <span class="sort-indicator">⇅</span>
                     </th>
@@ -101,6 +126,41 @@
         <!-- Container per la versione mobile -->
         <div id="mobile-table-container" class="mobile-table">
             <!-- Popolato dinamicamente -->
+        </div>
+
+        <!-- FAB (Floating Action Button) per mobile -->
+        <div class="fab-container" id="fab-container">
+            <div class="fab-overlay" id="fab-overlay"></div>
+            <div class="fab-menu" id="fab-menu">
+                <button class="fab-option income" id="fab-add-income" data-tooltip="Aggiungi Entrata">
+                    💰
+                </button>
+                <button class="fab-option expense" id="fab-add-expense" data-tooltip="Aggiungi Uscita">
+                    💸
+                </button>
+            </div>
+            <button class="fab-main" id="fab-main">
+                ➕
+                <div class="fab-badge" id="fab-badge">0</div>
+            </button>
+        </div>
+
+        <!-- FAB Excel per mobile -->
+        <div class="fab-excel-container" id="fab-excel-container">
+            <div class="fab-excel-menu" id="fab-excel-menu">
+                <button class="fab-excel-option template" id="fab-download-template" data-tooltip="Template">
+                    📄
+                </button>
+                <button class="fab-excel-option import" id="fab-import-excel" data-tooltip="Importa">
+                    📂
+                </button>
+                <button class="fab-excel-option export" id="fab-export-excel" data-tooltip="Esporta">
+                    📊
+                </button>
+            </div>
+            <button class="fab-excel-main" id="fab-excel-main">
+                📋
+            </button>
         </div>
 
         <!-- create popup structure -->
