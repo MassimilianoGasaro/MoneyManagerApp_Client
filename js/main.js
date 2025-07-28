@@ -5,6 +5,7 @@ import { ExcelService } from './excelService.js';
 import { TableManager } from './tableManager.js';
 import toast from "./toast.js";
 import { HandleTypologies } from "./handleTypes.js";
+import { PaginationManager } from "./paginationManager.js";
 
 // Istanza globale del servizio API
 const expensesService = new HandleExpenses();
@@ -14,11 +15,11 @@ const typologiesService = new HandleTypologies();
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
 
+// Istanza globale del gestore paginazione
+let paginationManager = null;
+
 // Imposta il callback per aggiornare le statistiche quando i dati cambiano
 tableManager.setOnDataChange(updateStatistics);
-
-// Esponi tableManager globalmente per debug
-window.tableManager = tableManager;
 
 // Istanze globali inizializzate a null
 let createPopup = null;
@@ -75,7 +76,9 @@ function resetPopupInstance() {
 // Funzioni AJAX per le chiamate HTTP
 async function fetchRecords() {
     try {
-        const response = await expensesService.getListByUser();
+        // Per ora usa ancora tutti i dati per compatibilità
+        // In futuro sarà sostituito da fetchRecordsPaginated
+        const response = await expensesService.getAllUserExpenses();
         if (!response.success) {
             toast.error("Errore nel recupero dei dati: " + response.message);
             throw new Error(`HTTP error! status: ${response.success}`);
@@ -84,6 +87,34 @@ async function fetchRecords() {
     } catch (error) {
         console.error('Errore nel fetch dei record:', error);
         return [];
+    }
+}
+
+// Funzione alternativa per caricamento paginato (per uso futuro)
+async function fetchRecordsPaginated(page = 1, limit = 50) {
+    try {
+        const response = await expensesService.getPaginatedUserExpenses(page, limit);
+        if (!response.success) {
+            toast.error("Errore nel recupero dei dati: " + response.message);
+            throw new Error(`HTTP error! status: ${response.success}`);
+        }
+        return {
+            records: response.data,
+            pagination: response.pagination
+        };
+    } catch (error) {
+        console.error('Errore nel fetch paginato dei record:', error);
+        return {
+            records: [],
+            pagination: {
+                currentPage: 1,
+                totalPages: 1,
+                totalRecords: 0,
+                limit: limit,
+                hasNextPage: false,
+                hasPrevPage: false
+            }
+        };
     }
 }
 
@@ -107,10 +138,25 @@ function updateStatistics(records) {
     
     records.forEach(record => {
         const amount = parseFloat(record.amount) || 0;
-        if (record.type === 'uscita' || record.type === 'expense') {
+        
+        // Gestisce sia la struttura vecchia (type come stringa) che nuova (type come oggetto)
+        let typeName = '';
+        if (typeof record.type === 'string') {
+            typeName = record.type.toLowerCase();
+        } else if (record.type && typeof record.type === 'object' && record.type.name) {
+            typeName = record.type.name.toLowerCase();
+        }
+        
+        // Classifica in base al nome della tipologia
+        // Puoi personalizzare questa logica in base alle tue tipologie
+        if (typeName.includes('spesa') || typeName.includes('uscita') || typeName.includes('expense')) {
             totalExpenses += amount;
-        } else if (record.type === 'entrata' || record.type === 'income') {
+        } else if (typeName.includes('entrata') || typeName.includes('income') || typeName.includes('guadagno')) {
             totalIncome += amount;
+        } else {
+            // Per ora consideriamo tutto come spesa se non specificato
+            // Puoi modificare questa logica secondo le tue esigenze
+            totalExpenses += amount;
         }
     });
     
@@ -180,48 +226,9 @@ function populateTable(records) {
     
     // Aggiorna le statistiche
     updateStatistics(records);
-}
-
-// Funzione per aprire il popup per aggiungere un nuovo record
-async function openCreatePopup() {
-    console.log('Apertura del popup per aggiungere un nuovo record');
-
-    try {
-        // Chiamata per ottenere le tipologie
-        const res = await getExpenseTypes();
-        if (!res.success) {
-            toast.error(`${res.message}`);
-            return; 
-        }
-
-        // Usa l'istanza globale, creandola solo se non esiste
-        const popup = getPopupInstance("createPopup");
-
-        // Reset del form prima di configurare
-        popup.resetForm();
-
-        // Configura il popup per l'aggiunta
-        popup.show({
-            title: 'Aggiungi Record',
-            saveBtnText: 'Salva',
-            onSave: async () => {
-                await saveNewRecord();
-            },
-            onError: (error) => {
-                console.error('Errore durante il salvataggio:', error);
-                toast.error(`${error.message}`);
-            }
-        });
-
-        // Popola la select delle tipologie DOPO aver mostrato il popup
-        setTimeout(() => {
-            populateTypeSelect('createPopup', res.data || []);
-        }, 100);
-
-    } catch (error) {
-        console.error('Errore durante l\'apertura del popup:', error);
-        toast.error('Errore durante il caricamento delle tipologie');
-    }
+    
+    // Popola il filtro dei tipi con i dati attuali
+    populateTypeFilter(records);
 }
 
 // Funzione per aprire il popup per aggiungere una spesa (uscita)
@@ -716,14 +723,38 @@ async function deleteSelectedRecords() {
 
 // Funzione per caricare i dati
 async function loadData(preserveSelections = false) {
-    const records = await fetchRecords();
-    populateTable(records);
+    // Se la paginazione è abilitata, usa quella
+    if (paginationManager && paginationManager.currentPage) {
+        await paginationManager.loadPage(paginationManager.currentPage);
+    } else {
+        // Altrimenti usa il metodo tradizionale
+        const records = await fetchRecords();
+        populateTable(records);
+    }
     
     // Pulisci le selezioni solo se esplicitamente richiesto
     if (!preserveSelections) {
         setTimeout(() => {
             tableManager.clearSelections();
         }, 100);
+    }
+}
+
+// Funzione per abilitare/disabilitare la paginazione
+function togglePagination(enabled = true) {
+    if (enabled) {
+        // Abilita la paginazione
+        if (!paginationManager) {
+            paginationManager = new PaginationManager(expensesService, tableManager);
+        }
+        paginationManager.setEnabled(true);
+        paginationManager.loadPage(1); // Carica la prima pagina
+    } else {
+        // Disabilita la paginazione e carica tutti i dati
+        if (paginationManager) {
+            paginationManager.setEnabled(false);
+        }
+        loadData(); // Carica tutti i dati
     }
 }
 
@@ -1008,6 +1039,49 @@ function populateTypeSelect(popupId, types, selectedType = '') {
     console.log(`Select popolata con ${types.length} tipologie in popup ${popupId}`);
 }
 
+// Funzione per popolare il filtro dei tipi
+function populateTypeFilter(records) {
+    const typeFilter = document.getElementById('type-filter');
+    if (!typeFilter) return;
+    
+    // Raccogli tutti i tipi unici dai record
+    const uniqueTypes = new Map();
+    
+    records.forEach(record => {
+        if (record.type) {
+            if (typeof record.type === 'object' && record.type.name && record.type._id) {
+                uniqueTypes.set(record.type._id, record.type.name);
+            } else if (typeof record.type === 'string') {
+                uniqueTypes.set(record.type, record.type);
+            }
+        }
+    });
+    
+    // Mantieni il valore attualmente selezionato
+    const currentValue = typeFilter.value;
+    
+    // Pulisci e ripopola la select
+    typeFilter.innerHTML = '<option value="">Tutti i tipi</option>';
+    
+    // Ordina i tipi alfabeticamente e aggiungili alla select
+    const sortedTypes = Array.from(uniqueTypes.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+    
+    sortedTypes.forEach(([id, name]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = name;
+        
+        // Ripristina la selezione se era presente
+        if (id === currentValue) {
+            option.selected = true;
+        }
+        
+        typeFilter.appendChild(option);
+    });
+    
+    console.log(`Filtro tipi popolato con ${uniqueTypes.size} tipi unici`);
+}
+
 // Funzione per inizializzare le statistiche
 function initializeStatistics() {
     const totalRecordsEl = document.getElementById('stats-total-records');
@@ -1022,59 +1096,6 @@ function initializeStatistics() {
         balanceEl.textContent = '€0,00';
         balanceEl.classList.add('zero');
     }
-}
-
-// Inizializzazione dell'applicazione
-async function init() {
-    // Carica header e footer
-    getHeaderAndFooter();
-    
-    // Inizializza le statistiche a zero
-    initializeStatistics();
-    
-    // Carica i dati dalla API
-    await loadData();
-
-    // Aggiungi eventi per i pulsanti "Aggiungi Uscita" e "Aggiungi Entrata"
-    const addExpenseBtn = document.getElementById('add-expense-btn');
-    const addIncomeBtn = document.getElementById('add-income-btn');
-    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
-    
-    if (addExpenseBtn) {
-        addExpenseBtn.removeEventListener('click', openExpensePopup); // Rimuovi eventuali listener esistenti
-        addExpenseBtn.addEventListener('click', openExpensePopup);
-    } else {
-        console.error('Pulsante "Aggiungi Uscita" non trovato.');
-    }
-    
-    if (addIncomeBtn) {
-        addIncomeBtn.removeEventListener('click', openIncomePopup); // Rimuovi eventuali listener esistenti
-        addIncomeBtn.addEventListener('click', openIncomePopup);
-    } else {
-        console.error('Pulsante "Aggiungi Entrata" non trovato.');
-    }
-    
-    if (deleteSelectedBtn) {
-        deleteSelectedBtn.removeEventListener('click', deleteSelectedRecords); // Rimuovi eventuali listener esistenti
-        deleteSelectedBtn.addEventListener('click', deleteSelectedRecords);
-    } else {
-        console.error('Pulsante "Elimina Selezionati" non trovato.');
-    }
-    
-    // Configura event listeners per la tabella
-    setupTableEventListeners();
-    
-    // Inizializza funzionalità Excel
-    initializeExcelFeatures();
-    
-    // Inizializza il toggle dei filtri
-    initializeFiltersToggle();
-    
-    // Inizializza il FAB mobile
-    initializeMobileFAB();
-    
-    // Inizializza il FAB Excel
-    initializeExcelFAB();
 }
 
 // Funzione per inizializzare il toggle dei filtri
@@ -1378,6 +1399,81 @@ function initializeExcelFAB() {
     // (questa logica è già gestita nelle funzioni toggle)
     
     console.log('FAB Excel inizializzato con successo');
+}
+
+// Inizializzazione dell'applicazione
+async function init() {
+    // Carica header e footer
+    getHeaderAndFooter();
+    
+    // Inizializza le statistiche a zero
+    initializeStatistics();
+    
+    // Carica i dati dalla API
+    await loadData();
+
+    // Aggiungi eventi per i pulsanti "Aggiungi Uscita" e "Aggiungi Entrata"
+    const addExpenseBtn = document.getElementById('add-expense-btn');
+    const addIncomeBtn = document.getElementById('add-income-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const togglePaginationBtn = document.getElementById('toggle-pagination');
+    
+    if (addExpenseBtn) {
+        addExpenseBtn.removeEventListener('click', openExpensePopup);
+        addExpenseBtn.addEventListener('click', openExpensePopup);
+    } else {
+        console.error('Pulsante "Aggiungi Uscita" non trovato.');
+    }
+    
+    if (addIncomeBtn) {
+        addIncomeBtn.removeEventListener('click', openIncomePopup);
+        addIncomeBtn.addEventListener('click', openIncomePopup);
+    } else {
+        console.error('Pulsante "Aggiungi Entrata" non trovato.');
+    }
+    
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.removeEventListener('click', deleteSelectedRecords);
+        deleteSelectedBtn.addEventListener('click', deleteSelectedRecords);
+    } else {
+        console.error('Pulsante "Elimina Selezionati" non trovato.');
+    }
+    
+    // Gestione toggle paginazione
+    if (togglePaginationBtn) {
+        let isPaginationEnabled = false;
+        
+        togglePaginationBtn.addEventListener('click', () => {
+            isPaginationEnabled = !isPaginationEnabled;
+            
+            if (isPaginationEnabled) {
+                togglePaginationBtn.textContent = '📋 Disabilita Paginazione';
+                togglePaginationBtn.classList.add('active');
+                togglePagination(true);
+                toast.info('Paginazione abilitata - Caricamento di 20 record per pagina');
+            } else {
+                togglePaginationBtn.textContent = '📄 Abilita Paginazione';
+                togglePaginationBtn.classList.remove('active');
+                togglePagination(false);
+                toast.info('Paginazione disabilitata - Caricamento di tutti i record');
+            }
+        });
+    }
+    
+    // Configura event listeners per la tabella
+    setupTableEventListeners();
+    
+    // Inizializza funzionalità Excel
+    initializeExcelFeatures();
+    
+    // Inizializza il toggle dei filtri
+    initializeFiltersToggle();
+    
+    // Inizializza il FAB mobile
+    initializeMobileFAB();
+    
+    // Inizializza il FAB Excel
+    initializeExcelFAB();
 }
 
 // Avvia l'applicazione quando il DOM è pronto

@@ -92,9 +92,20 @@ export class TableManager {
                 if (!titleMatch && !descMatch) return false;
             }
 
-            // Filtro tipo
-            if (this.filters.type && record.type !== this.filters.type) {
-                return false;
+            // Filtro tipo - gestisce sia struttura vecchia che nuova
+            if (this.filters.type) {
+                let recordType = '';
+                if (typeof record.type === 'string') {
+                    recordType = record.type;
+                } else if (record.type && typeof record.type === 'object' && record.type.name) {
+                    recordType = record.type.name;
+                } else if (record.type && typeof record.type === 'object' && record.type._id) {
+                    recordType = record.type._id;
+                }
+                
+                if (recordType !== this.filters.type) {
+                    return false;
+                }
             }
 
             // Filtro data da
@@ -139,6 +150,21 @@ export class TableManager {
             if (this.currentSort.column === 'title') {
                 valueA = a.title || a.name || '';
                 valueB = b.title || b.name || '';
+            }
+
+            // Gestione tipo - considera la nuova struttura
+            if (this.currentSort.column === 'type') {
+                if (typeof valueA === 'object' && valueA && valueA.name) {
+                    valueA = valueA.name;
+                } else if (typeof valueA !== 'string') {
+                    valueA = '';
+                }
+                
+                if (typeof valueB === 'object' && valueB && valueB.name) {
+                    valueB = valueB.name;
+                } else if (typeof valueB !== 'string') {
+                    valueB = '';
+                }
             }
 
             // Gestione date
@@ -309,8 +335,28 @@ export class TableManager {
         }
         
         const cardsHtml = this.filteredData.map(record => {
-            const typeClass = record.type.type === 'expense' ? 'expense' : 'income';
-            const typeIcon = record.type.type === 'expense' ? '💸' : '💰';
+            // Gestisce la nuova struttura del tipo
+            let typeClass = 'expense'; // default
+            let typeIcon = '💸'; // default
+            let typeName = '';
+            
+            if (record.type) {
+                if (typeof record.type === 'object' && record.type.name) {
+                    typeName = record.type.name;
+                    // Classifica in base al nome della tipologia
+                    const typeNameLower = typeName.toLowerCase();
+                    if (typeNameLower.includes('entrata') || typeNameLower.includes('income') || typeNameLower.includes('guadagno')) {
+                        typeClass = 'income';
+                        typeIcon = '💰';
+                    }
+                } else if (typeof record.type === 'string') {
+                    typeName = record.type;
+                    if (record.type === 'income' || record.type === 'entrata') {
+                        typeClass = 'income';
+                        typeIcon = '💰';
+                    }
+                }
+            }
 
             // Controlla se questo record era selezionato
             const isSelected = selectedIds.includes(record._id);
@@ -318,13 +364,13 @@ export class TableManager {
             const checkedAttr = isSelected ? 'checked' : '';
             
             return `
-                <div class="mobile-card ${selectedClass}" data-type="${record.type.type}">
+                <div class="mobile-card ${selectedClass}" data-type="${typeClass}">
                     <input type="checkbox" class="mobile-card-checkbox row-checkbox" data-id="${record._id}" ${checkedAttr}>
                     <div class="mobile-card-header">
                         <div>
                             <div class="mobile-card-title">${record.title || record.name || ''}</div>
                             <div class="type-badge ${typeClass}">
-                                ${typeIcon} ${record.type.name || ''}
+                                ${typeIcon} ${typeName}
                             </div>
                         </div>
                         <div class="mobile-card-amount ${typeClass}">€${record.amount ? record.amount.toFixed(2) : '0.00'}</div>
