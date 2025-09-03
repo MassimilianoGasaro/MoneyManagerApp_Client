@@ -341,8 +341,8 @@ export class TableManager {
             let typeName = '';
             
             if (record.type) {
-                if (typeof record.type === 'object' && record.type.name) {
-                    typeName = record.type.name;
+                if (typeof record.type === 'object' && record.type.type) {
+                    typeName = record.type.type;
                     // Classifica in base al nome della tipologia
                     const typeNameLower = typeName.toLowerCase();
                     if (typeNameLower.includes('entrata') || typeNameLower.includes('income') || typeNameLower.includes('guadagno')) {

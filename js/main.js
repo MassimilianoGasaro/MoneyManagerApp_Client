@@ -1164,7 +1164,6 @@ function initializeMobileFAB() {
             fabMain.classList.add('expanded');
             fabMenu.classList.add('expanded');
             fabOverlay.classList.add('active');
-            fabMain.innerHTML = '✕'; // Icona di chiusura
             
             // Sposta il FAB Excel più in alto per evitare sovrapposizioni
             if (fabExcelContainer) {
@@ -1176,7 +1175,6 @@ function initializeMobileFAB() {
             fabMain.classList.remove('expanded');
             fabMenu.classList.remove('expanded');
             fabOverlay.classList.remove('active');
-            fabMain.innerHTML = '➕'; // Icona di aggiunta
             
             // Riporta il FAB Excel alla posizione originale
             if (fabExcelContainer) {
