@@ -1,5 +1,5 @@
 export class ApiService {
-    #baseUrl = "https://personalfinance-6ic7.onrender.com/api";
+    #baseUrl = "http://localhost:3000/api";
 
     endpoint = null;
 

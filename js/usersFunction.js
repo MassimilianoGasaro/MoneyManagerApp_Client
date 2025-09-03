@@ -65,11 +65,8 @@ class HandleUsers extends ApiService {
                 }
             });
             
-            // Rimuovi sempre i dati locali
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user_id');
-            
-            return response.ok;
+            return response.json();
+
         } catch (error) {
             console.error('Errore durante il logout:', error);
             // Anche se c'è un errore, rimuovi i dati locali

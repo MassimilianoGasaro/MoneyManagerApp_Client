@@ -7,13 +7,23 @@ class HandleExpenses extends ApiService {
         this.#apiUrl = this.endpoint;
     }
 
-    async getListByUser() {
-        console.log("Recupero lista spese per l'utente");
+    async getListByUser(page = 1, limit = 50, getAllData = false) {
+        console.log("Recupero lista spese per l'utente", { page, limit, getAllData });
         try {
-
             const params = new URLSearchParams();
             const userId = localStorage.getItem('user_id');
             if (userId) params.append('user_id', userId);
+            
+            // Se getAllData è true, recupera tutti i dati in una volta
+            if (getAllData) {
+                // Impostiamo un limite molto alto per ottenere tutti i dati
+                params.append('page', '1');
+                params.append('limit', '10000');
+            } else {
+                // Paginazione normale
+                params.append('page', page.toString());
+                params.append('limit', limit.toString());
+            }
             
             const url = `${this.#apiUrl}/user?${params.toString()}`;
             
@@ -25,11 +35,24 @@ class HandleExpenses extends ApiService {
                 }
             });
 
-            return await response.json();
+            const result = await response.json();
+            
+            // Gestisce la nuova struttura della risposta
+            if (getAllData) {
+                // Per compatibilità, restituisce solo i dati
+                return {
+                    success: result.success,
+                    data: result.data?.activities || [],
+                    message: result.message
+                };
+            }
+            
+            // Restituisce la risposta completa con la nuova struttura
+            return result;
 
         } catch (error) {
             console.error('Errore nel recupero della lista spese:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error;
         }
     }
 
@@ -136,6 +159,74 @@ class HandleExpenses extends ApiService {
         } catch (error) {
             console.error('Errore nell\'eliminazione del dato:', error);
             throw error; // Rilancia l'errore per gestirlo nel chiamante
+        }
+    }
+
+    // Metodo per ottenere tutti i dati senza paginazione (per compatibilità)
+    async getAllUserExpenses() {
+        return await this.getListByUser(1, 10000, true);
+    }
+
+    // Metodo per ottenere dati paginati con metadati completi
+    async getPaginatedUserExpenses(page = 1, limit = 50) {
+        const result = await this.getListByUser(page, limit, false);
+        
+        // Adatta la struttura alla nuova risposta API
+        const pagination = result.data?.pagination || {};
+        
+        return {
+            success: result.success,
+            data: result.data?.activities || [],
+            pagination: {
+                currentPage: pagination.currentPage || page,
+                totalPages: pagination.totalPages || 1,
+                totalRecords: pagination.totalItems || 0,
+                limit: pagination.itemsPerPage || limit,
+                hasNextPage: pagination.hasNextPage || false,
+                hasPrevPage: pagination.hasPrevPage || false,
+                nextPage: pagination.nextPage || null,
+                prevPage: pagination.prevPage || null
+            },
+            message: result.message
+        };
+    }
+
+    // Metodo per ottenere tutti i dati concatenando le pagine (utile per grandi dataset)
+    async getAllUserExpensesPaginated(limitPerPage = 100) {
+        console.log("Recupero tutti i dati utilizzando la paginazione");
+        try {
+            let allData = [];
+            let currentPage = 1;
+            let hasMoreData = true;
+            
+            while (hasMoreData) {
+                const result = await this.getPaginatedUserExpenses(currentPage, limitPerPage);
+                
+                if (result.success && result.data.length > 0) {
+                    allData = allData.concat(result.data);
+                    hasMoreData = result.pagination.hasNextPage;
+                    currentPage++;
+                } else {
+                    hasMoreData = false;
+                }
+                
+                // Protezione contro loop infiniti
+                if (currentPage > 1000) {
+                    console.warn("Limite massimo di pagine raggiunto");
+                    break;
+                }
+            }
+            
+            return {
+                success: true,
+                data: allData,
+                totalRecords: allData.length,
+                message: "Tutti i dati recuperati con successo"
+            };
+            
+        } catch (error) {
+            console.error('Errore nel recupero di tutti i dati paginati:', error);
+            throw error;
         }
     }
 }

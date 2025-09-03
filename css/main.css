@@ -2,14 +2,250 @@
 @import url("variables.css");
 @import url("popup.css");
 
-/* Sezione Filtri */
+/* ============================================================
+   BARRA STATISTICHE
+============================================================ */
+.stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, var(--background-secondary), #f8f9fa);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(0, 123, 255, 0.05), transparent);
+    pointer-events: none;
+}
+
+.stats-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.stats-item:hover {
+    background: rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    font-size: 1.2rem;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.stats-label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.stats-value {
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    background: var(--primary-color);
+    color: white;
+    min-width: 2.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stats-value.expense {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.stats-value.income {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.stats-value.balance {
+    background: linear-gradient(135deg, #6f42c1, #5a2d91);
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.stats-value.balance.positive {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.stats-value.balance.negative {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.stats-value.balance.zero {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+/* Animazione per gli aggiornamenti */
+.stats-value.updating {
+    animation: stats-pulse 0.6s ease-in-out;
+}
+
+@keyframes stats-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); background: #ffc107; }
+    100% { transform: scale(1); }
+}
+
+.stats-bar:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.stats-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.stats-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.stats-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+#stats-balance {
+    transition: color 0.3s ease;
+}
+
+#stats-balance.positive {
+    color: #28a745;
+}
+
+#stats-balance.negative {
+    color: #dc3545;
+}
+
+#stats-balance.zero {
+    color: #6c757d;
+}
+
+/* Mobile responsiveness per la barra statistiche */
+@media (max-width: 768px) {
+    .stats-bar {
+        margin: 10px 15px;
+        padding: 12px 16px;
+        gap: 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .stats-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stats-item {
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .stats-label {
+        font-size: 12px;
+    }
+
+    .stats-value {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-bar {
+        margin: 8px 10px;
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .stats-item {
+        min-width: 70px;
+    }
+
+    .stats-label {
+        font-size: 11px;
+    }
+
+    .stats-value {
+        font-size: 13px;
+    }
+}
+
+/* ============================================================
+   SEZIONE FILTRI
+============================================================ */
 .filters-section {
     background-color: var(--background-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 1.5rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Stato collapsed - nascosto */
+.filters-section.collapsed {
+    max-height: 0;
+    margin-bottom: 0;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
+}
+
+/* Stato expanded - visibile */
+.filters-section.expanded {
+    max-height: 1000px;
+    opacity: 1;
+}
+
+/* Contenuto dei filtri */
+.filters-content {
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.filters-section.collapsed .filters-content {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.filters-section.expanded .filters-content {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .filters-section h3 {
@@ -17,6 +253,26 @@
     margin-bottom: 1rem;
     color: var(--primary-color);
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Stili per il bottone toggle */
+.toggle-filters-btn {
+    background-color: var(--toggle-filters-btn);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.toggle-filters-btn:hover {
+    transform: translateY(-2px);
+}
+
+.toggle-filters-btn.active {
+    background-color: var(--toggle-filters-btn);
+    color: white;
 }
 
 .filters-grid {
@@ -137,15 +393,6 @@
     flex-wrap: wrap;
 }
 
-.toolbar>.btn {
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
 .export-btn {
     background-color: var(--export-excel-btn);
     color: var(--toolbar-text-color);
@@ -161,12 +408,31 @@
     color: var(--toolbar-text-color);
 }
 
-.export-btn:hover,
-.import-btn:hover,
-.template-btn:hover,
-.add-btn:hover {
-    opacity: 0.9;
+.add-expense-btn {
+    background-color: #dc3545; /* Rosso per le uscite */
+    color: white;
+}
+
+.add-income-btn {
+    background-color: #28a745; /* Verde per le entrate */
+    color: white;
+}
+
+.delete-selected-btn {
+    background-color: #dc3545; /* Rosso per eliminazione */
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.delete-selected-btn:hover {
+    background-color: #c82333;
     transform: translateY(-2px);
+}
+
+.delete-selected-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Popup per validation errors */
@@ -240,12 +506,12 @@ main {
 }
 
 .edit-btn {
-    background-color: #28a745;
+    background-color: var(--background-edit-btn);
     color: white;
 }
 
 .delete-btn {
-    background-color: #dc3545;
+    background-color: var(--background-delete-btn);
     color: white;
 }
 
@@ -538,11 +804,11 @@ main {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.mobile-card[data-type="SpesaGenerica"] {
+.mobile-card[data-type="expense"] {
     border-left-color: #dc3545;
 }
 
-.mobile-card[data-type="Entrata"] {
+.mobile-card[data-type="income"] {
     border-left-color: #28a745;
 }
 
@@ -564,9 +830,14 @@ main {
 .mobile-card-amount {
     font-size: 1.4rem;
     font-weight: 700;
-    color: #dc3545;
     text-align: right;
     min-width: 100px;
+}
+.mobile-card-amount.expense {
+    color: #dc3545;
+}
+.mobile-card-amount.income {
+    color: #28a745;
 }
 
 .mobile-card-details {
@@ -634,11 +905,11 @@ main {
     margin-top: 0.25rem;
 }
 
-.type-badge.spesa {
+.type-badge.expense {
     background: #dc3545;
 }
 
-.type-badge.entrata {
+.type-badge.income {
     background: #28a745;
 }
 
@@ -696,14 +967,25 @@ main {
         margin-bottom: 1.5rem;
     }
     
-    .add-btn {
+    /* Nascondi i bottoni Aggiungi e Excel su mobile - saranno sostituiti dai FAB */
+    .add-expense-btn,
+    .add-income-btn,
+    .export-btn,
+    .import-btn,
+    .template-btn {
+        display: none !important;
+    }
+    
+    .delete-selected-btn {
         grid-column: span 2;
-        background: var(--primary-color);
+        background-color: #dc3545;
         color: white;
-        font-weight: 600;
-        padding: 1rem;
-        font-size: 1.1rem;
-        border-radius: 8px;
+        order: 1;
+    }
+    
+    .toggle-filters-btn {
+        grid-column: span 2;
+        order: 2;
     }
     
     .toolbar .btn {
@@ -713,6 +995,15 @@ main {
         white-space: nowrap;
     }
     
+    /* Responsive filtri */
+    .filters-section.expanded {
+        max-height: 2000px; /* Più spazio per mobile */
+    }
+    
+    .filters-content {
+        padding: 1rem;
+    }
+    
     /* Responsive popup */
     .popup-container {
         width: 95vw;
@@ -720,3 +1011,783 @@ main {
         margin: 2rem auto;
     }
 }
+
+/* Stili per le checkbox di selezione multipla */
+.checkbox-column {
+    width: 40px;
+    text-align: center;
+}
+
+.checkbox-column input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.row-checkbox {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+/* Stili per le righe selezionate */
+.styled-table tbody tr.selected {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.styled-table tbody tr.selected:hover {
+    background-color: rgba(0, 123, 255, 0.15);
+}
+
+/* Stili per le mobile cards selezionate */
+.mobile-card.selected {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.mobile-card-checkbox {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.mobile-card {
+    position: relative;
+    padding-right: 40px; /* Spazio per la checkbox */
+}
+
+/* ===== FAB (Floating Action Button) Mobile ===== */
+.fab-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: none; /* Nascosto su desktop */
+}
+
+.fab-main {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.fab-main:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0, 123, 255, 0.4);
+}
+
+.fab-main.expanded {
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.fab-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2));
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.fab-main:hover::before {
+    opacity: 1;
+}
+
+.fab-menu {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-menu.expanded {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-option {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transform: scale(0);
+}
+
+.fab-option.expense {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.fab-option.income {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.fab-menu.expanded .fab-option {
+    transform: scale(1);
+}
+
+.fab-menu.expanded .fab-option:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.fab-menu.expanded .fab-option:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.fab-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fab-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2));
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.fab-option:hover::before {
+    opacity: 1;
+}
+
+/* Tooltip per i FAB */
+.fab-option {
+    position: relative;
+}
+
+.fab-option::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+.fab-option:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(-5px);
+}
+
+/* Overlay per chiudere il menu */
+.fab-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 999;
+    display: none;
+}
+
+.fab-overlay.active {
+    display: block;
+}
+
+/* Overlay con stato multiplo quando entrambi i menu sono aperti */
+.fab-overlay.multiple-menus {
+    background: rgba(0, 0, 0, 0.1); /* Leggera tinta per indicare più menu aperti */
+}
+
+/* Animazione di pulsazione per attirare l'attenzione */
+@keyframes fab-pulse {
+    0% {
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.6), 0 0 0 10px rgba(0, 123, 255, 0.1);
+    }
+    100% {
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    }
+}
+
+.fab-main.pulse {
+    animation: fab-pulse 2s infinite;
+}
+
+/* Responsivo - mostra solo su mobile */
+@media (max-width: 768px) {
+    .fab-container {
+        display: block;
+    }
+}
+
+/* ===== FAB Excel (secondo FAB) ===== */
+.fab-excel-container {
+    position: fixed;
+    bottom: 90px; /* Posizionato sopra il FAB principale */
+    right: 20px;
+    z-index: 1000;
+    display: none; /* Nascosto su desktop */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Transizione fluida per il movimento */
+}
+
+/* Quando il menu principale è aperto, sposta il FAB Excel più in alto */
+.fab-excel-container.main-menu-open {
+    bottom: 220px; /* Spostato molto più in alto per evitare sovrapposizioni */
+}
+
+.fab-excel-main {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Transizione fluida anche per il FAB */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Quando il FAB Excel si sposta, mantiene una transizione fluida */
+.fab-excel-container.main-menu-open .fab-excel-main {
+    box-shadow: 0 3px 15px rgba(40, 167, 69, 0.4); /* Shadow più pronunciata quando spostato */
+}
+
+/* Indicatore visivo per il FAB Excel quando è spostato */
+.fab-excel-container.main-menu-open .fab-excel-main::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #28a745, #20c997, #28a745);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.3;
+    animation: fab-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes fab-glow {
+    from { transform: scale(1); opacity: 0.3; }
+    to { transform: scale(1.1); opacity: 0.1; }
+}
+
+.fab-excel-main:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+}
+
+.fab-excel-main.expanded {
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.fab-excel-menu {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Aggiusta il posizionamento del menu Excel quando il FAB principale è aperto */
+.fab-excel-container.main-menu-open .fab-excel-menu {
+    bottom: 60px; /* Mantiene la distanza relativa dal FAB Excel */
+}
+
+.fab-excel-menu.expanded {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-excel-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0);
+}
+
+.fab-excel-option.export {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.fab-excel-option.import {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+.fab-excel-option.template {
+    background: linear-gradient(135deg, #6f42c1, #5a2d91);
+}
+
+.fab-excel-menu.expanded .fab-excel-option {
+    transform: scale(1);
+}
+
+.fab-excel-menu.expanded .fab-excel-option:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.fab-excel-menu.expanded .fab-excel-option:nth-child(2) {
+    transition-delay: 0.15s;
+}
+
+.fab-excel-menu.expanded .fab-excel-option:nth-child(3) {
+    transition-delay: 0.2s;
+}
+
+.fab-excel-option:hover {
+    transform: scale(1.1);
+}
+
+/* Tooltip per FAB Excel */
+.fab-excel-option::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: 50px; /* Allineato a destra come il FAB principale */
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+.fab-excel-option:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(-5px);
+}
+
+@media (max-width: 768px) {
+    .fab-container,
+    .fab-excel-container {
+        display: block;
+    }
+}
+
+/* Animazioni FAB */
+@keyframes fab-enter {
+    0% {
+        transform: scale(0) rotate(180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(90deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.fab-main,
+.fab-excel-main {
+    animation: fab-enter 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.fab-excel-main {
+    animation-delay: 0.2s; /* Appare leggermente dopo il FAB principale */
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+/* Animazione per quando i FAB si nascondono durante lo scroll */
+.fab-container.hidden,
+.fab-excel-container.hidden {
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+/* Effetto ripple al click */
+.fab-main::after,
+.fab-excel-main::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.fab-main.clicked::after,
+.fab-excel-main.clicked::after {
+    width: 120px;
+    height: 120px;
+}
+
+/* Badge per le selezioni attive */
+.fab-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: bold;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    animation: badge-bounce 0.3s ease;
+}
+
+.fab-badge.visible {
+    display: flex;
+}
+
+@keyframes badge-bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* ============================================================
+   PAGINAZIONE
+============================================================ */
+.pagination-container {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin: 20px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.pagination-container.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.pagination-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#pagination-info-text {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.pagination-size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-size label {
+    font-size: 14px;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.pagination-size select {
+    padding: 5px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+    transition: border-color 0.3s ease;
+}
+
+.pagination-size select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    min-width: 40px;
+    height: 40px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f8f9fa;
+    color: #adb5bd;
+}
+
+.pagination-pages {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.pagination-page {
+    min-width: 40px;
+    height: 40px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.pagination-page:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.pagination-page.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 700;
+}
+
+.pagination-ellipsis {
+    padding: 0 8px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.pagination-goto {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.pagination-goto label {
+    font-size: 14px;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.pagination-goto input {
+    width: 70px;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+
+.pagination-goto input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.pagination-goto button {
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pagination-goto button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Mobile responsiveness per la paginazione */
+@media (max-width: 768px) {
+    .pagination-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .pagination-info {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .pagination-size {
+        justify-content: center;
+    }
+
+    .pagination-controls {
+        gap: 4px;
+    }
+
+    .pagination-btn,
+    .pagination-page {
+        min-width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+
+    .pagination-pages {
+        gap: 2px;
+    }
+
+    .pagination-goto {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    #pagination-info-text {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pagination-container {
+        margin: 5px;
+        padding: 10px;
+    }
+
+    .pagination-btn,
+    .pagination-page {
+        min-width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    /* Nascondi alcuni controlli su schermi molto piccoli */
+    .pagination-ellipsis {
+        display: none;
+    }
+
+    .pagination-pages .pagination-page:not(.active) {
+        display: none;
+    }
+
+    .pagination-pages .pagination-page.active {
+        display: inline-block;
+    }
+
+    /* Mostra solo prima, corrente, ultima e navigazione */
+    .pagination-pages .pagination-page:first-child,
+    .pagination-pages .pagination-page:last-child {
+        display: inline-block !important;
+    }
+}
+
+/* Animazioni */
+@keyframes pagination-load {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.pagination-container {
+    animation: pagination-load 0.3s ease;
+}
+
+/* ============================================================ */

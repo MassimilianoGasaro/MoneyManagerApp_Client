@@ -1,8 +1,25 @@
-function handleLogout(e) {
+import usersFunctions from "./usersFunction.js";
+import toast from "./toast.js";
+import authManager from "./auth.js";
+
+async function handleLogout(e) {
     e.preventDefault();
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user_id');
-    window.location.href = 'login.html';
+
+    try {
+        const response = await usersFunctions.logout();
+        if (response.success) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user_id');
+            toast.success('Logout effettuato con successo!');
+            setTimeout(() => authManager.redirectToLogin(), 100);
+        } else {
+            toast.error(`Errore durante il logout: ${response.message}`);
+        }
+    } catch (error) {
+        console.error('Errore durante il logout:', error);
+        toast.show('Errore durante il logout');
+    };
+
 }
 
 function initHamburgerMenu() {

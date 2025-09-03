@@ -26,7 +26,6 @@ header {
     font-weight: bold;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     letter-spacing: -0.5px;
@@ -160,6 +159,8 @@ header {
 .mobile-nav.active .nav-links li:nth-child(2) { animation-delay: 0.2s; }
 .mobile-nav.active .nav-links li:nth-child(3) { animation-delay: 0.3s; }
 .mobile-nav.active .nav-links li:nth-child(4) { animation-delay: 0.4s; }
+
+.mobile-nav.active .nav-links li:not(:last-child) { padding-bottom: 1rem; }
 
 .mobile-nav .nav-links li a {
     font-size: 1.3rem;

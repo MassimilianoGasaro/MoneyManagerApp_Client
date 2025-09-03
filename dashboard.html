@@ -24,56 +24,85 @@
 
     <!-- Main -->
     <main>
+        <!-- Toolbar -->
         <div class="toolbar">
-            <button class="btn add-btn">➕ Aggiungi Record</button>
+            <button class="btn add-expense-btn" id="add-expense-btn">💸 Aggiungi Uscita</button>
+            <button class="btn add-income-btn" id="add-income-btn">💰 Aggiungi Entrata</button>
+            <button class="btn delete-selected-btn" id="delete-selected-btn" style="display: none;">🗑️ Elimina Selezionati</button>
+            <button class="btn toggle-filters-btn" id="toggle-filters">🔍 Mostra Filtri</button>
+            <button class="btn toggle-pagination-btn" id="toggle-pagination">📄 Abilita Paginazione</button>
             <button class="btn export-btn" id="export-excel">📊 Esporta Excel</button>
             <button class="btn import-btn" id="import-excel">📂 Importa Excel</button>
             <button class="btn template-btn" id="download-template">📄 Scarica Template</button>
             <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display: none;">
         </div>
         
-        <!-- Sezione Filtri -->
-        <div class="filters-section">
-            <h3>🔍 Filtri e Ricerca</h3>
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label for="search-input">Cerca:</label>
-                    <input type="text" id="search-input" placeholder="Cerca in titolo o descrizione...">
-                </div>
-                <div class="filter-group">
-                    <label for="type-filter">Tipo:</label>
-                    <select id="type-filter">
-                        <option value="">Tutti i tipi</option>
-                        <option value="SpesaGenerica">Spesa Generica</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="date-from">Data da:</label>
-                    <input type="date" id="date-from">
-                </div>
-                <div class="filter-group">
-                    <label for="date-to">Data a:</label>
-                    <input type="date" id="date-to">
-                </div>
-                <div class="filter-group">
-                    <label for="amount-min">Importo min:</label>
-                    <input type="number" id="amount-min" step="0.01" placeholder="0.00">
-                </div>
-                <div class="filter-group">
-                    <label for="amount-max">Importo max:</label>
-                    <input type="number" id="amount-max" step="0.01" placeholder="1000.00">
-                </div>
+        <!-- Barra Statistiche -->
+        <div class="stats-bar" id="stats-bar">
+            <div class="stats-item">
+                <span class="stats-label">📊 Totale Record:</span>
+                <span class="stats-value" id="stats-total-records">0</span>
             </div>
-            <div class="filters-actions">
-                <button class="btn filter-btn" id="apply-filters">✅ Applica Filtri</button>
-                <button class="btn clear-btn" id="clear-filters">🔄 Pulisci Filtri</button>
-                <div class="results-info" id="results-info"></div>
+            <div class="stats-item">
+                <span class="stats-label">💸 Uscite:</span>
+                <span class="stats-value" id="stats-total-expenses">€0.00</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">💰 Entrate:</span>
+                <span class="stats-value" id="stats-total-income">€0.00</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">📈 Bilancio:</span>
+                <span class="stats-value" id="stats-balance">€0.00</span>
+            </div>
+        </div>
+        
+        <!-- Sezione Filtri -->
+        <div class="filters-section collapsed" id="filters-section">
+            <div class="filters-content">
+                <h3>🔍 Filtri e Ricerca</h3>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="search-input">Cerca:</label>
+                        <input type="text" id="search-input" placeholder="Cerca in titolo o descrizione...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="type-filter">Tipo:</label>
+                        <select id="type-filter">
+                            <option value="">Tutti i tipi</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="date-from">Data da:</label>
+                        <input type="date" id="date-from">
+                    </div>
+                    <div class="filter-group">
+                        <label for="date-to">Data a:</label>
+                        <input type="date" id="date-to">
+                    </div>
+                    <div class="filter-group">
+                        <label for="amount-min">Importo min:</label>
+                        <input type="number" id="amount-min" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="filter-group">
+                        <label for="amount-max">Importo max:</label>
+                        <input type="number" id="amount-max" step="0.01" placeholder="1000.00">
+                    </div>
+                </div>
+                <div class="filters-actions">
+                    <button class="btn filter-btn" id="apply-filters">✅ Applica Filtri</button>
+                    <button class="btn clear-btn" id="clear-filters">🔄 Pulisci Filtri</button>
+                    <div class="results-info" id="results-info"></div>
+                </div>
             </div>
         </div>
         
         <table class="styled-table">
             <thead>
                 <tr>
+                    <th class="checkbox-column">
+                        <input type="checkbox" id="select-all-checkbox" title="Seleziona tutto">
+                    </th>
                     <th class="sortable" data-column="title">
                         Titolo <span class="sort-indicator">⇅</span>
                     </th>
@@ -97,6 +126,41 @@
         <!-- Container per la versione mobile -->
         <div id="mobile-table-container" class="mobile-table">
             <!-- Popolato dinamicamente -->
+        </div>
+
+        <!-- FAB (Floating Action Button) per mobile -->
+        <div class="fab-container" id="fab-container">
+            <div class="fab-overlay" id="fab-overlay"></div>
+            <div class="fab-menu" id="fab-menu">
+                <button class="fab-option income" id="fab-add-income" data-tooltip="Aggiungi Entrata">
+                    💰
+                </button>
+                <button class="fab-option expense" id="fab-add-expense" data-tooltip="Aggiungi Uscita">
+                    💸
+                </button>
+            </div>
+            <button class="fab-main" id="fab-main">
+                ➕
+                <div class="fab-badge" id="fab-badge">0</div>
+            </button>
+        </div>
+
+        <!-- FAB Excel per mobile -->
+        <div class="fab-excel-container" id="fab-excel-container">
+            <div class="fab-excel-menu" id="fab-excel-menu">
+                <button class="fab-excel-option template" id="fab-download-template" data-tooltip="Template">
+                    📄
+                </button>
+                <button class="fab-excel-option import" id="fab-import-excel" data-tooltip="Importa">
+                    📂
+                </button>
+                <button class="fab-excel-option export" id="fab-export-excel" data-tooltip="Esporta">
+                    📊
+                </button>
+            </div>
+            <button class="fab-excel-main" id="fab-excel-main">
+                📋
+            </button>
         </div>
 
         <!-- create popup structure -->
@@ -123,8 +187,6 @@
                         <div class="form-group">
                             <label for="type-select">Tipo:</label>
                             <select name="type-select" id="type-select">
-                                <option value="">--Please choose an option--</option>
-                                <option value="SpesaGenerica">Spesa Generica</option>
                             </select>
                         </div>
                         <div class="form-group">

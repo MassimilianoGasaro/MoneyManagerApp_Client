@@ -15,4 +15,9 @@
     --export-excel-btn: #28a745;
     --import-excel-btn: #17a2b8;
     --template-excel-btn: #6c757d;
+    --toggle-filters-btn: #ffc107;
+    --background-expense: #f8d7da;
+    --background-income: #d4edda;
+    --background-edit-btn: #ecaa59;
+    --background-delete-btn: #dc3545;
 }

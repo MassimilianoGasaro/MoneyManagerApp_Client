@@ -4,12 +4,22 @@ import { HandleExpenses } from './expensesFunction.js';
 import { ExcelService } from './excelService.js';
 import { TableManager } from './tableManager.js';
 import toast from "./toast.js";
+import { HandleTypologies } from "./handleTypes.js";
+import { PaginationManager } from "./paginationManager.js";
 
 // Istanza globale del servizio API
 const expensesService = new HandleExpenses();
+// Istanza globale del servizio per le tipologie
+const typologiesService = new HandleTypologies();
 
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
+
+// Istanza globale del gestore paginazione
+let paginationManager = null;
+
+// Imposta il callback per aggiornare le statistiche quando i dati cambiano
+tableManager.setOnDataChange(updateStatistics);
 
 // Istanze globali inizializzate a null
 let createPopup = null;
@@ -66,7 +76,9 @@ function resetPopupInstance() {
 // Funzioni AJAX per le chiamate HTTP
 async function fetchRecords() {
     try {
-        const response = await expensesService.getListByUser();
+        // Per ora usa ancora tutti i dati per compatibilità
+        // In futuro sarà sostituito da fetchRecordsPaginated
+        const response = await expensesService.getAllUserExpenses();
         if (!response.success) {
             toast.error("Errore nel recupero dei dati: " + response.message);
             throw new Error(`HTTP error! status: ${response.success}`);
@@ -78,51 +90,229 @@ async function fetchRecords() {
     }
 }
 
-// Funzione per formattare le date
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    
+// Funzione alternativa per caricamento paginato (per uso futuro)
+async function fetchRecordsPaginated(page = 1, limit = 50) {
     try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('it-IT', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
+        const response = await expensesService.getPaginatedUserExpenses(page, limit);
+        if (!response.success) {
+            toast.error("Errore nel recupero dei dati: " + response.message);
+            throw new Error(`HTTP error! status: ${response.success}`);
+        }
+        return {
+            records: response.data,
+            pagination: response.pagination
+        };
     } catch (error) {
-        return 'Data non valida';
+        console.error('Errore nel fetch paginato dei record:', error);
+        return {
+            records: [],
+            pagination: {
+                currentPage: 1,
+                totalPages: 1,
+                totalRecords: 0,
+                limit: limit,
+                hasNextPage: false,
+                hasPrevPage: false
+            }
+        };
     }
 }
 
+// Funzione per aggiornare le statistiche nella barra
+function updateStatistics(records) {
+    // Elementi della barra statistiche
+    const totalRecordsEl = document.getElementById('stats-total-records');
+    const totalExpensesEl = document.getElementById('stats-total-expenses');
+    const totalIncomeEl = document.getElementById('stats-total-income');
+    const balanceEl = document.getElementById('stats-balance');
+    
+    if (!totalRecordsEl || !totalExpensesEl || !totalIncomeEl || !balanceEl) {
+        console.warn('Elementi della barra statistiche non trovati');
+        return;
+    }
+    
+    // Calcola le statistiche
+    const totalRecords = records.length;
+    let totalExpenses = 0;
+    let totalIncome = 0;
+    
+    records.forEach(record => {
+        const amount = parseFloat(record.amount) || 0;
+        
+        // Gestisce sia la struttura vecchia (type come stringa) che nuova (type come oggetto)
+        let typeName = '';
+        if (typeof record.type === 'string') {
+            typeName = record.type.toLowerCase();
+        } else if (record.type && typeof record.type === 'object' && record.type.name) {
+            typeName = record.type.name.toLowerCase();
+        }
+        
+        // Classifica in base al nome della tipologia
+        // Puoi personalizzare questa logica in base alle tue tipologie
+        if (typeName.includes('spesa') || typeName.includes('uscita') || typeName.includes('expense')) {
+            totalExpenses += amount;
+        } else if (typeName.includes('entrata') || typeName.includes('income') || typeName.includes('guadagno')) {
+            totalIncome += amount;
+        } else {
+            // Per ora consideriamo tutto come spesa se non specificato
+            // Puoi modificare questa logica secondo le tue esigenze
+            totalExpenses += amount;
+        }
+    });
+    
+    const balance = totalIncome - totalExpenses;
+    
+    // Aggiorna i valori con animazione
+    animateValue(totalRecordsEl, totalRecords, 0, 'number');
+    animateValue(totalExpensesEl, totalExpenses, 2, 'currency');
+    animateValue(totalIncomeEl, totalIncome, 2, 'currency');
+    animateValue(balanceEl, balance, 2, 'currency');
+    
+    // Aggiorna la classe del bilancio per il colore
+    balanceEl.classList.remove('positive', 'negative', 'zero');
+    if (balance > 0) {
+        balanceEl.classList.add('positive');
+    } else if (balance < 0) {
+        balanceEl.classList.add('negative');
+    } else {
+        balanceEl.classList.add('zero');
+    }
+}
+
+// Funzione per animare i valori numerici
+function animateValue(element, targetValue, decimals = 0, type = 'number') {
+    const currentValue = parseFloat(element.textContent.replace(/[€.,]/g, '')) || 0;
+    const difference = targetValue - currentValue;
+    const duration = 500; // ms
+    const steps = 30;
+    const stepValue = difference / steps;
+    const stepTime = duration / steps;
+    
+    let currentStep = 0;
+    
+    const timer = setInterval(() => {
+        currentStep++;
+        const newValue = currentValue + (stepValue * currentStep);
+        
+        if (currentStep >= steps) {
+            clearInterval(timer);
+            // Assicurati che il valore finale sia esatto
+            updateElementValue(element, targetValue, decimals, type);
+        } else {
+            updateElementValue(element, newValue, decimals, type);
+        }
+    }, stepTime);
+}
+
+// Funzione helper per aggiornare il valore dell'elemento
+function updateElementValue(element, value, decimals, type) {
+    let formattedValue;
+    
+    if (type === 'currency') {
+        formattedValue = '€' + value.toFixed(decimals).replace('.', ',');
+    } else if (type === 'number') {
+        formattedValue = Math.round(value).toString();
+    } else {
+        formattedValue = value.toFixed(decimals);
+    }
+    
+    element.textContent = formattedValue;
+}
 
 // Funzione per popolare la tabella
 function populateTable(records) {
     // Usa il TableManager per gestire i dati (sia tabella desktop che versione mobile)
     tableManager.setData(records);
+    
+    // Aggiorna le statistiche
+    updateStatistics(records);
+    
+    // Popola il filtro dei tipi con i dati attuali
+    populateTypeFilter(records);
 }
 
-// Funzione per aprire il popup per aggiungere un nuovo record
-function openCreatePopup() {
-    console.log('Apertura del popup per aggiungere un nuovo record');
-    
-    // Usa l'istanza globale, creandola solo se non esiste
-    const popup = getPopupInstance("createPopup");
+// Funzione per aprire il popup per aggiungere una spesa (uscita)
+async function openExpensePopup() {
+    console.log('Apertura del popup per aggiungere una spesa');
 
-    // Reset del form prima di configurare
-    popup.resetForm();
-
-    // Configura il popup per l'aggiunta
-    popup.show({
-        title: 'Aggiungi Record',
-        saveBtnText: 'Salva',
-        onSave: async () => {
-            await saveNewRecord();
-        },
-        onError: (error) => {
-            console.error('Errore durante il salvataggio:', error);
-            toast.error(`${error.message}`);
+    try {
+        // Chiamata per ottenere solo le tipologie di spesa
+        const res = await getExpenseTypologies();
+        if (!res.success) {
+            toast.error(`${res.message}`);
+            return; 
         }
-    });
+
+        // Usa l'istanza globale, creandola solo se non esiste
+        const popup = getPopupInstance("createPopup");
+
+        // Reset del form prima di configurare
+        popup.resetForm();
+
+        // Configura il popup per l'aggiunta di una spesa
+        popup.show({
+            title: '💸 Aggiungi Uscita',
+            saveBtnText: 'Salva Uscita',
+            onSave: async () => {
+                await saveNewRecord();
+            },
+            onError: (error) => {
+                console.error('Errore durante il salvataggio:', error);
+                toast.error(`${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie di spesa DOPO aver mostrato il popup
+        setTimeout(() => {
+            populateTypeSelect('createPopup', res.data || []);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup per le spese:', error);
+        toast.error('Errore durante il caricamento delle tipologie di spesa');
+    }
+}
+
+// Funzione per aprire il popup per aggiungere un'entrata
+async function openIncomePopup() {
+    console.log('Apertura del popup per aggiungere un\'entrata');
+
+    try {
+        // Chiamata per ottenere solo le tipologie di entrata
+        const res = await getIncomeTypologies();
+        if (!res.success) {
+            toast.error(`${res.message}`);
+            return; 
+        }
+
+        // Usa l'istanza globale, creandola solo se non esiste
+        const popup = getPopupInstance("createPopup");
+
+        // Reset del form prima di configurare
+        popup.resetForm();
+
+        // Configura il popup per l'aggiunta di un'entrata
+        popup.show({
+            title: '💰 Aggiungi Entrata',
+            saveBtnText: 'Salva Entrata',
+            onSave: async () => {
+                await saveNewRecord();
+            },
+            onError: (error) => {
+                console.error('Errore durante il salvataggio:', error);
+                toast.error(`${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie di entrata DOPO aver mostrato il popup
+        setTimeout(() => {
+            populateTypeSelect('createPopup', res.data || []);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup per le entrate:', error);
+        toast.error('Errore durante il caricamento delle tipologie di entrata');
+    }
 }
 
 // Funzione separata per salvare un nuovo record
@@ -161,7 +351,7 @@ async function saveNewRecord() {
             name: formData.title, 
             amount: formData.amount, 
             description: formData.description || "", 
-            date: formData.date , 
+            date: formData.date, 
             type: formData.type
         };
 
@@ -172,7 +362,7 @@ async function saveNewRecord() {
 
         toast.success('Record aggiunto con successo!');
 
-        await loadData(); // Ricarica i dati nella tabella
+        await loadData(true); // Ricarica i dati nella tabella, preservando le selezioni
 
     } catch (error) {
         throw error; // Rilancia per gestione in onError
@@ -180,30 +370,50 @@ async function saveNewRecord() {
 }
 
 // Funzione per aprire il popup per modificare un record
-function openEditPopup(recordId) {
+async function openEditPopup(recordId) {
     console.log('Apertura del popup per modificare record:', recordId);
-    
-    // Usa la stessa istanza globale
-    const popup = getPopupInstance("updatePopup");
 
-    // Configura il popup per la modifica
-    popup.show({
-        title: 'Modifica Record',
-        saveBtnText: 'Aggiorna',
-        onSave: async () => {
-            await updateRecord(recordId);
-        },
-        onError: (error) => {
-            console.error('Errore durante l\'aggiornamento:', error);
-            toast.error(`Errore: ${error.message}`);
+    try {
+        // Carica i dati del record e le tipologie in parallelo
+        const [recordData, typesResponse] = await Promise.all([
+            loadRecordData(recordId),
+            getActiveTypologies()
+        ]);
+
+        if (!typesResponse.success) {
+            toast.error(`Errore nel caricamento delle tipologie: ${typesResponse.message}`);
+            return;
         }
-    });
-    
-    // Carica i dati del record nel form DOPO che il popup è mostrato
-    // Usa un setTimeout per assicurarsi che il popup sia renderizzato
-    setTimeout(() => {
-        loadRecordData(recordId);
-    }, 200);
+
+        // Usa la stessa istanza globale
+        const popup = getPopupInstance("updatePopup");
+
+        // Configura il popup per la modifica
+        popup.show({
+            title: 'Modifica Record',
+            saveBtnText: 'Aggiorna',
+            onSave: async () => {
+                await updateRecord(recordId);
+            },
+            onError: (error) => {
+                console.error('Errore durante l\'aggiornamento:', error);
+                toast.error(`Errore: ${error.message}`);
+            }
+        });
+
+        // Popola la select delle tipologie e il form DOPO aver mostrato il popup
+        setTimeout(() => {
+            // Prima popola la select con tutte le tipologie
+            populateTypeSelect('updatePopup', typesResponse.data || [], recordData.type);
+            
+            // Poi popola il resto del form
+            populateEditForm(recordData);
+        }, 100);
+
+    } catch (error) {
+        console.error('Errore durante l\'apertura del popup di modifica:', error);
+        toast.error('Errore durante il caricamento dei dati');
+    }
 }
 
 // Funzione per caricare i dati di un record nel form (per la modifica)
@@ -214,64 +424,71 @@ async function loadRecordData(recordId) {
             throw new Error(response.message);
         }
         
-        const data = response.data;
-        console.log('Dati del record caricati:', data);
-        
-        // Trova il popup specifico e cerca gli elementi al suo interno
-        const updatePopupElement = document.getElementById('updatePopup');
-        console.log('Popup updatePopup trovato:', updatePopupElement);
-        
-        if (!updatePopupElement) {
-            console.error('Popup updatePopup non trovato nel DOM');
-            return;
-        }
-        
-        // Cerca gli elementi del form nel popup specifico
-        const titleElement = updatePopupElement.querySelector('#title');
-        const descriptionElement = updatePopupElement.querySelector('#description');
-        const amountElement = updatePopupElement.querySelector('#amount');
-        const typeElement = updatePopupElement.querySelector('#type-select');
-        const dateElement = updatePopupElement.querySelector('#date');
-        
-        
-        // Popola il form se gli elementi esistono
-        if (titleElement) {
-            titleElement.value = data.name || '';
-            titleElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Title impostato:", titleElement.value);
-        } else {
-            console.error('Elemento title non trovato nel popup');
-        }
-        
-        if (descriptionElement) {
-            descriptionElement.value = data.description || '';
-            descriptionElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Description impostato:", descriptionElement.value);
-        }
-        
-        if (amountElement) {
-            amountElement.value = data.amount || '';
-            amountElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Amount impostato:", amountElement.value);
-        }
-        
-        if (typeElement) {
-            typeElement.value = data.type || '';
-            typeElement.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log("Type impostato:", typeElement.value);
-        }
-        
-        if (dateElement) {
-            // Formatta la data per input type="date"
-            const formattedDate = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
-            dateElement.value = formattedDate;
-            dateElement.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log("Date impostato:", dateElement.value);
-        }
-        
+        console.log('Dati del record caricati:', response.data);
+        return response.data;
     } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
         toast.error('Errore nel caricamento dei dati del record');
+        throw error; // Rilancia l'errore per gestirlo nel chiamante
+    }
+}
+
+// Funzione per popolare il form di modifica con i dati del record
+function populateEditForm(data) {
+    // Trova il popup specifico e cerca gli elementi al suo interno
+    const updatePopupElement = document.getElementById('updatePopup');
+    console.log('Popup updatePopup trovato:', updatePopupElement);
+    
+    if (!updatePopupElement) {
+        console.error('Popup updatePopup non trovato nel DOM');
+        return;
+    }
+    
+    // Cerca gli elementi del form nel popup specifico
+    const titleElement = updatePopupElement.querySelector('#title');
+    const descriptionElement = updatePopupElement.querySelector('#description');
+    const amountElement = updatePopupElement.querySelector('#amount');
+    const typeElement = updatePopupElement.querySelector('#type-select');
+    const dateElement = updatePopupElement.querySelector('#date');
+    
+    
+    // Popola il form se gli elementi esistono
+    if (titleElement) {
+        titleElement.value = data.name || '';
+        titleElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Title impostato:", titleElement.value);
+    } else {
+        console.error('Elemento title non trovato nel popup');
+    }
+    
+    if (descriptionElement) {
+        descriptionElement.value = data.description || '';
+        descriptionElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Description impostato:", descriptionElement.value);
+    }
+    
+    if (amountElement) {
+        amountElement.value = data.amount || '';
+        amountElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Amount impostato:", amountElement.value);
+    }
+    
+    if (typeElement) {
+        // Il tipo dovrebbe già essere preselezionato dalla populateTypeSelect
+        // Ma forziamo la selezione se necessario
+        if (data.type) {
+            typeElement.value = data.type;
+            typeElement.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log("Type impostato:", typeElement.value);
+        }
+    }
+    
+    if (dateElement) {
+        // Formatta la data per input type="date"
+        const formattedDate = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
+        dateElement.value = formattedDate;
+        dateElement.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("Date impostato:", dateElement.value);
     }
 }
 
@@ -324,7 +541,7 @@ async function updateRecord(recordId) {
         toast.success('Record aggiornato con successo!');
         
         // Ricarica i dati nella tabella
-        await loadData();
+        await loadData(true);
         
     } catch (error) {
         throw error; // Rilancia per gestione in onError
@@ -346,6 +563,14 @@ function setupTableEventListeners() {
                 deleteRecord(recordId);
             }
         });
+        
+        // Gestione checkbox righe
+        tableBody.addEventListener('change', (e) => {
+            if (e.target.classList.contains('row-checkbox')) {
+                tableManager.updateRowSelection(e.target);
+                tableManager.updateSelectionState();
+            }
+        });
     }
     
     // Event listeners per le mobile cards
@@ -360,6 +585,22 @@ function setupTableEventListeners() {
             } else if (e.target.classList.contains('delete-btn') && recordId) {
                 deleteRecord(recordId);
             }
+        });
+        
+        // Gestione checkbox mobile cards
+        mobileContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('row-checkbox')) {
+                tableManager.updateRowSelection(e.target);
+                tableManager.updateSelectionState();
+            }
+        });
+    }
+    
+    // Gestione checkbox "Seleziona tutto"
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', () => {
+            tableManager.toggleSelectAll();
         });
     }
 }
@@ -386,24 +627,135 @@ async function deleteRecord(recordId) {
                 
                 toast.success('Record eliminato con successo!');
                 
-                // Ricarica i dati nella tabella
-                await loadData();
+                // Pulisci selezioni e ricarica i dati nella tabella
+                tableManager.clearSelections();
+                await loadData(true); // Preserva le selezioni perché abbiamo già pulito
         
             } catch (error) {
                 throw error; // Rilancia per gestione in onError
             }
         },
         onError: (error) => {
-            console.error('Errore durante l\'aggiornamento:', error);
+            console.error('Errore durante l\'eliminazione:', error);
             toast.error(`Errore: ${error.message}`);
         }
     });
 }
 
+// Funzione per eliminazione multipla
+async function deleteSelectedRecords() {
+    const selectedIds = tableManager.getSelectedRecords();
+    
+    if (selectedIds.length === 0) {
+        toast.warning('Nessun record selezionato');
+        return;
+    }
+    
+    console.log('Conferma per eliminazione multipla di:', selectedIds);
+    
+    // Usa lo stesso popup di eliminazione singola
+    const popup = getPopupInstance("deletePopup");
+
+    // Configura il popup per l'eliminazione multipla
+    popup.show({
+        title: `Elimina ${selectedIds.length} Record`,
+        saveBtnText: `Elimina ${selectedIds.length} Record`,
+        onSave: async () => {
+            try {
+                toast.info(`Eliminazione di ${selectedIds.length} record in corso...`);
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                // Elimina tutti i record selezionati
+                for (const recordId of selectedIds) {
+                    try {
+                        const response = await expensesService.deleteExpenseById(recordId);
+                        if (response.success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            console.error(`Errore eliminazione record ${recordId}:`, response.message);
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        console.error(`Errore eliminazione record ${recordId}:`, error);
+                    }
+                }
+                
+                // Mostra risultati
+                if (successCount > 0) {
+                    toast.success(`${successCount} record eliminati con successo!`);
+                }
+                
+                if (errorCount > 0) {
+                    toast.warning(`${errorCount} record non sono stati eliminati`);
+                }
+                
+                // Pulisci selezioni e ricarica dati
+                tableManager.clearSelections();
+                await loadData(true); // Preserva le selezioni perché abbiamo già pulito
+        
+            } catch (error) {
+                throw error; // Rilancia per gestione in onError
+            }
+        },
+        onError: (error) => {
+            console.error('Errore durante l\'eliminazione multipla:', error);
+            toast.error(`Errore: ${error.message}`);
+        }
+    });
+    
+    // Personalizza il contenuto del popup per mostrare i dettagli
+    const popup_element = document.getElementById('deletePopup');
+    const content = popup_element.querySelector('.popup-content');
+    if (content) {
+        const existingP = content.querySelector('p');
+        if (existingP) {
+            existingP.innerHTML = `
+                Sei sicuro di voler eliminare <strong>${selectedIds.length}</strong> record selezionati?
+                <br><br>
+                <small>⚠️ Questa operazione non può essere annullata.</small>
+            `;
+        }
+    }
+}
+
 // Funzione per caricare i dati
-async function loadData() {
-    const records = await fetchRecords();
-    populateTable(records);
+async function loadData(preserveSelections = false) {
+    // Se la paginazione è abilitata, usa quella
+    if (paginationManager && paginationManager.currentPage) {
+        await paginationManager.loadPage(paginationManager.currentPage);
+    } else {
+        // Altrimenti usa il metodo tradizionale
+        const records = await fetchRecords();
+        populateTable(records);
+    }
+    
+    // Pulisci le selezioni solo se esplicitamente richiesto
+    if (!preserveSelections) {
+        setTimeout(() => {
+            tableManager.clearSelections();
+        }, 100);
+    }
+}
+
+// Funzione per abilitare/disabilitare la paginazione
+function togglePagination(enabled = true) {
+    if (enabled) {
+        // Abilita la paginazione
+        if (!paginationManager) {
+            paginationManager = new PaginationManager(expensesService, tableManager);
+        }
+        paginationManager.setEnabled(true);
+        paginationManager.loadPage(1); // Carica la prima pagina
+    } else {
+        // Disabilita la paginazione e carica tutti i dati
+        if (paginationManager) {
+            paginationManager.setEnabled(false);
+        }
+        loadData(); // Carica tutti i dati
+    }
 }
 
 // ===== FUNZIONALITÀ EXCEL =====
@@ -444,9 +796,13 @@ function initializeExcelFeatures() {
 
     // Template Excel
     if (templateBtn) {
-        templateBtn.addEventListener('click', () => {
+        templateBtn.addEventListener('click', async () => {
             try {
-                ExcelService.generateTemplate();
+                // Recupera le tipologie per creare un template più completo
+                const typologiesResponse = await getActiveTypologies();
+                const typologies = typologiesResponse.success ? typologiesResponse.data || [] : [];
+                
+                ExcelService.generateTemplate(typologies);
                 toast.success('Template Excel scaricato con successo!');
             } catch (error) {
                 console.error('Errore durante il download del template:', error);
@@ -477,8 +833,12 @@ function initializeExcelFeatures() {
                 return;
             }
 
-            // Valida i dati
-            const validation = ExcelService.validateImportData(importedData);
+            // Recupera le tipologie per la validazione
+            const typologiesResponse = await getActiveTypologies();
+            const typologies = typologiesResponse.success ? typologiesResponse.data || [] : [];
+            
+            // Valida i dati con le tipologie
+            const validation = ExcelService.validateImportData(importedData, typologies);
 
             console.log('Dati validati:', validation);
             
@@ -488,6 +848,8 @@ function initializeExcelFeatures() {
             
             if (validation.valid.length > 0) {
                 await importValidData(validation.valid);
+            } else if (validation.invalid.length > 0) {
+                toast.error(`Tutti i ${validation.invalid.length} record hanno errori di validazione`);
             }
             
         } catch (error) {
@@ -508,10 +870,27 @@ async function importValidData(validData) {
         
         toast.info(`Importazione di ${validData.length} record in corso...`);
         
+        // Recupera tutte le tipologie per la mappatura
+        const typologiesResponse = await getActiveTypologies();
+        if (!typologiesResponse.success) {
+            throw new Error('Impossibile recuperare le tipologie per la validazione');
+        }
+        
+        const typologies = typologiesResponse.data || [];
+        console.log('Tipologie disponibili per mappatura:', typologies);
+        
         for (let item of validData) {
             try {
-                await expensesService.addExpense(item);
-                successCount++;
+                // Mappa il nome della tipologia al suo ID
+                const mappedItem = await mapTypologyToId(item, typologies);
+                
+                if (mappedItem) {
+                    await expensesService.addExpense(mappedItem);
+                    successCount++;
+                } else {
+                    errorCount++;
+                    console.error('Tipologia non trovata per il record:', item);
+                }
             } catch (error) {
                 errorCount++;
                 console.error('Errore nell\'importazione del record:', error);
@@ -520,7 +899,7 @@ async function importValidData(validData) {
         
         if (successCount > 0) {
             toast.success(`${successCount} record importati con successo!`);
-            await loadData(); // Ricarica la tabella
+            await loadData(); // Ricarica la tabella (nuovi dati, selezioni pulite)
         }
         
         if (errorCount > 0) {
@@ -533,62 +912,566 @@ async function importValidData(validData) {
     }
 }
 
+// Funzione per mappare il nome della tipologia al suo ID
+async function mapTypologyToId(item, typologies) {
+    try {
+        // Cerca la tipologia per nome (case-insensitive)
+        const typology = typologies.find(t => 
+            t.name && t.name.toLowerCase() === item.type.toLowerCase()
+        );
+        
+        if (!typology) {
+            console.error(`Tipologia "${item.type}" non trovata`);
+            return null;
+        }
+        
+        // Ritorna l'item con l'ID della tipologia invece del nome
+        return {
+            name: item.name,
+            amount: item.amount,
+            description: item.description || "",
+            date: item.date,
+            type: typology._id // Usa l'ID invece del nome
+        };
+        
+    } catch (error) {
+        console.error('Errore nella mappatura della tipologia:', error);
+        return null;
+    }
+}
+
 // Funzione per mostrare errori di validazione
 function showValidationErrors(invalidData) {
-    // const popup = getPopupInstance('createPopup');
+    let errorMessage = `Trovati ${invalidData.length} errori di validazione:\n\n`;
     
-    // let errorHtml = '<div class="validation-errors">';
-    // errorHtml += '<h4>Errori di validazione trovati:</h4>';
+    invalidData.slice(0, 10).forEach(item => { // Mostra solo i primi 10 errori
+        errorMessage += `Riga ${item.row}: ${item.errors.join(', ')}\n`;
+    });
     
-    // invalidData.forEach(item => {
-    //     errorHtml += `<div class="error-item">`;
-    //     errorHtml += `<strong>Riga ${item.row}:</strong> ${item.errors.join(', ')}`;
-    //     errorHtml += `</div>`;
-    // });
+    if (invalidData.length > 10) {
+        errorMessage += `\n... e altri ${invalidData.length - 10} errori.`;
+    }
     
-    // errorHtml += '</div>';
-    // errorHtml += '<p>I record validi sono stati importati correttamente.</p>';
+    errorMessage += '\n\nI record validi sono stati importati correttamente.';
     
-    // popup.show({
-    //     title: 'Errori di Validazione',
-    //     saveBtnText: 'Chiudi',
-    //     onSave: () => {
-    //         // Non fare nulla, il popup si chiude automaticamente
-    //     }
-    // });
+    // Mostra il messaggio con un toast lungo
+    toast.error(errorMessage);
     
-    // // Sostituisci il contenuto del popup con gli errori
-    // const contentArea = popup.popup.querySelector('.popup-content');
-    // contentArea.innerHTML = errorHtml + `
-    //     <div class="form-actions">
-    //         <button type="button" class="btn confirm-btn">Chiudi</button>
-    //     </div>
-    // `;
+    // Log dettagliato in console per debug
+    console.error('Errori di validazione dettagliati:', invalidData);
 }
 
 // ===== FINE FUNZIONALITÀ EXCEL =====
+
+// Funzione per ottenere tutte le tipologie attive
+async function getActiveTypologies() {
+    try {
+        const response = await typologiesService.getTypologies();
+        return response;
+    } catch (error) {
+        console.error('Errore nel recupero delle tipologie attive:', error);
+        throw error;
+    }
+}
+
+// Funzione per ottenere solo le tipologie di spesa (uscite)
+async function getExpenseTypologies() {
+    try {
+        const response = await typologiesService.getExpenseTypologies();
+        return response;
+    } catch (error) {
+        console.error('Errore nel recupero delle tipologie di spesa:', error);
+        throw error;
+    }
+}
+
+// Funzione per ottenere solo le tipologie di entrata
+async function getIncomeTypologies() {
+    try {
+        const response = await typologiesService.getIncomeTypologies();
+        return response;
+    } catch (error) {
+        console.error('Errore nel recupero delle tipologie di entrata:', error);
+        throw error;
+    }
+}
+
+// Funzione per popolare la select delle tipologie
+function populateTypeSelect(popupId, types, selectedType = '') {
+    const popupElement = document.getElementById(popupId);
+    if (!popupElement) {
+        console.error(`Popup ${popupId} non trovato nel DOM`);
+        return;
+    }
+    
+    const typeSelect = popupElement.querySelector('#type-select');
+    if (!typeSelect) {
+        console.error('Select type-select non trovata nel popup');
+        return;
+    }
+    
+    // Pulisci le opzioni esistenti
+    typeSelect.innerHTML = '';
+    
+    // Aggiungi opzione di default
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '--Seleziona un tipo--';
+    typeSelect.appendChild(defaultOption);
+    
+    // Aggiungi le tipologie dalla API
+    if (types && types.length > 0) {
+        types.forEach(type => {
+            const option = document.createElement('option');
+            if (!type._id || type._id === '') return;
+            option.value = type._id || type.name;
+            option.textContent = type.name || type.description;
+            
+            // Seleziona l'opzione se corrisponde al tipo selezionato
+            if (selectedType && type._id === selectedType) {
+                option.selected = true;
+            }
+            
+            typeSelect.appendChild(option);
+        });
+    } 
+    
+    console.log(`Select popolata con ${types.length} tipologie in popup ${popupId}`);
+}
+
+// Funzione per popolare il filtro dei tipi
+function populateTypeFilter(records) {
+    const typeFilter = document.getElementById('type-filter');
+    if (!typeFilter) return;
+    
+    // Raccogli tutti i tipi unici dai record
+    const uniqueTypes = new Map();
+    
+    records.forEach(record => {
+        if (record.type) {
+            if (typeof record.type === 'object' && record.type.name && record.type._id) {
+                uniqueTypes.set(record.type._id, record.type.name);
+            } else if (typeof record.type === 'string') {
+                uniqueTypes.set(record.type, record.type);
+            }
+        }
+    });
+    
+    // Mantieni il valore attualmente selezionato
+    const currentValue = typeFilter.value;
+    
+    // Pulisci e ripopola la select
+    typeFilter.innerHTML = '<option value="">Tutti i tipi</option>';
+    
+    // Ordina i tipi alfabeticamente e aggiungili alla select
+    const sortedTypes = Array.from(uniqueTypes.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+    
+    sortedTypes.forEach(([id, name]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = name;
+        
+        // Ripristina la selezione se era presente
+        if (id === currentValue) {
+            option.selected = true;
+        }
+        
+        typeFilter.appendChild(option);
+    });
+    
+    console.log(`Filtro tipi popolato con ${uniqueTypes.size} tipi unici`);
+}
+
+// Funzione per inizializzare le statistiche
+function initializeStatistics() {
+    const totalRecordsEl = document.getElementById('stats-total-records');
+    const totalExpensesEl = document.getElementById('stats-total-expenses');
+    const totalIncomeEl = document.getElementById('stats-total-income');
+    const balanceEl = document.getElementById('stats-balance');
+    
+    if (totalRecordsEl) totalRecordsEl.textContent = '0';
+    if (totalExpensesEl) totalExpensesEl.textContent = '€0,00';
+    if (totalIncomeEl) totalIncomeEl.textContent = '€0,00';
+    if (balanceEl) {
+        balanceEl.textContent = '€0,00';
+        balanceEl.classList.add('zero');
+    }
+}
+
+// Funzione per inizializzare il toggle dei filtri
+function initializeFiltersToggle() {
+    const toggleBtn = document.getElementById('toggle-filters');
+    const filtersSection = document.getElementById('filters-section');
+    
+    if (!toggleBtn || !filtersSection) {
+        console.error('Bottone toggle filtri o sezione filtri non trovati');
+        return;
+    }
+    
+    // Stato iniziale: collassato
+    let isExpanded = false;
+    
+    toggleBtn.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        
+        if (isExpanded) {
+            // Espandi i filtri
+            filtersSection.classList.remove('collapsed');
+            filtersSection.classList.add('expanded');
+            toggleBtn.textContent = '🔼 Nascondi Filtri';
+            toggleBtn.classList.add('active');
+        } else {
+            // Collassa i filtri
+            filtersSection.classList.remove('expanded');
+            filtersSection.classList.add('collapsed');
+            toggleBtn.textContent = '🔍 Mostra Filtri';
+            toggleBtn.classList.remove('active');
+        }
+        
+        console.log(`Filtri ${isExpanded ? 'espansi' : 'collassati'}`);
+    });
+    
+    // Imposta stato iniziale
+    filtersSection.classList.add('collapsed');
+    toggleBtn.textContent = '🔍 Mostra Filtri';
+}
+
+// Funzione per inizializzare il FAB mobile
+function initializeMobileFAB() {
+    const fabMain = document.getElementById('fab-main');
+    const fabMenu = document.getElementById('fab-menu');
+    const fabOverlay = document.getElementById('fab-overlay');
+    const fabAddExpense = document.getElementById('fab-add-expense');
+    const fabAddIncome = document.getElementById('fab-add-income');
+    
+    if (!fabMain || !fabMenu || !fabOverlay) {
+        console.log('Elementi FAB non trovati nel DOM - probabilmente non su mobile');
+        return;
+    }
+    
+    let isExpanded = false;
+    
+    // Funzione per aprire/chiudere il menu FAB
+    function toggleFABMenu() {
+        isExpanded = !isExpanded;
+        
+        const fabExcelContainer = document.getElementById('fab-excel-container');
+        const fabExcelMain = document.getElementById('fab-excel-main');
+        const fabExcelMenu = document.getElementById('fab-excel-menu');
+        
+        if (isExpanded) {
+            // Apri il menu principale
+            fabMain.classList.add('expanded');
+            fabMenu.classList.add('expanded');
+            fabOverlay.classList.add('active');
+            
+            // Sposta il FAB Excel più in alto per evitare sovrapposizioni
+            if (fabExcelContainer) {
+                fabExcelContainer.classList.add('main-menu-open');
+            }
+            
+        } else {
+            // Chiudi il menu principale
+            fabMain.classList.remove('expanded');
+            fabMenu.classList.remove('expanded');
+            fabOverlay.classList.remove('active');
+            
+            // Riporta il FAB Excel alla posizione originale
+            if (fabExcelContainer) {
+                fabExcelContainer.classList.remove('main-menu-open');
+            }
+        }
+        
+        console.log(`FAB menu ${isExpanded ? 'aperto' : 'chiuso'}`);
+        
+        // Aggiorna l'overlay se necessario
+        updateOverlayState();
+    }
+    
+    // Event listeners
+    fabMain.addEventListener('click', () => {
+        // Effetto ripple
+        fabMain.classList.add('clicked');
+        setTimeout(() => fabMain.classList.remove('clicked'), 600);
+        
+        toggleFABMenu();
+    });
+    fabOverlay.addEventListener('click', () => {
+        // Chiudi il menu principale se è aperto
+        if (isExpanded) {
+            toggleFABMenu();
+        }
+        
+        // Chiudi anche il menu Excel se è aperto
+        const fabExcelMain = document.getElementById('fab-excel-main');
+        const fabExcelMenu = document.getElementById('fab-excel-menu');
+        if (fabExcelMain && fabExcelMenu && fabExcelMenu.classList.contains('expanded')) {
+            fabExcelMain.classList.remove('expanded');
+            fabExcelMenu.classList.remove('expanded');
+            fabExcelMain.innerHTML = '📋';
+            
+            // Aggiorna l'overlay dopo aver chiuso il menu Excel
+            if (typeof window.updateOverlayState === 'function') {
+                setTimeout(() => window.updateOverlayState(), 100);
+            }
+        }
+    });
+    
+    // Collega i bottoni FAB alle funzioni esistenti
+    if (fabAddExpense) {
+        fabAddExpense.addEventListener('click', () => {
+            toggleFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                openExpensePopup(); // Apri il popup per le uscite
+            }, 300); // Piccolo delay per l'animazione
+        });
+    }
+    
+    if (fabAddIncome) {
+        fabAddIncome.addEventListener('click', () => {
+            toggleFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                openIncomePopup(); // Apri il popup per le entrate
+            }, 300); // Piccolo delay per l'animazione
+        });
+    }
+    
+    // Chiudi il menu quando si fa scroll (UX migliorata)
+    let scrollTimeout;
+    let lastScrollY = window.scrollY;
+    let isScrolling = false;
+    
+    window.addEventListener('scroll', () => {
+        const fabContainer = document.getElementById('fab-container');
+        const fabExcelContainer = document.getElementById('fab-excel-container');
+        const currentScrollY = window.scrollY;
+        
+        // Chiudi i menu aperti durante lo scroll
+        if (isExpanded) {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                toggleFABMenu();
+            }, 150);
+        }
+        
+        // Auto-hide dei FAB durante lo scroll verso il basso
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Scroll verso il basso - nascondi i FAB
+            if (fabContainer) fabContainer.classList.add('hidden');
+            if (fabExcelContainer) fabExcelContainer.classList.add('hidden');
+        } else {
+            // Scroll verso l'alto o fermo - mostra i FAB
+            if (fabContainer) fabContainer.classList.remove('hidden');
+            if (fabExcelContainer) fabExcelContainer.classList.remove('hidden');
+        }
+        
+        lastScrollY = currentScrollY;
+        
+        // Reset dell'auto-hide dopo 3 secondi di inattività
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            if (fabContainer) fabContainer.classList.remove('hidden');
+            if (fabExcelContainer) fabExcelContainer.classList.remove('hidden');
+        }, 3000);
+    });
+    
+    // Animazione di pulsazione iniziale per attirare l'attenzione
+    setTimeout(() => {
+        fabMain.classList.add('pulse');
+        setTimeout(() => {
+            fabMain.classList.remove('pulse');
+        }, 4000); // Rimuovi dopo 4 secondi
+    }, 1000); // Inizia dopo 1 secondo
+    
+    console.log('FAB mobile inizializzato con successo');
+    
+    // Funzione per aggiornare lo stato dell'overlay
+    function updateOverlayState() {
+        const fabOverlay = document.getElementById('fab-overlay');
+        const fabMenu = document.getElementById('fab-menu');
+        const fabExcelMenu = document.getElementById('fab-excel-menu');
+        
+        if (!fabOverlay) return;
+        
+        const mainMenuOpen = fabMenu && fabMenu.classList.contains('expanded');
+        const excelMenuOpen = fabExcelMenu && fabExcelMenu.classList.contains('expanded');
+        
+        if (mainMenuOpen || excelMenuOpen) {
+            fabOverlay.classList.add('active');
+            
+            // Aggiungi classe speciale se entrambi i menu sono aperti
+            if (mainMenuOpen && excelMenuOpen) {
+                fabOverlay.classList.add('multiple-menus');
+            } else {
+                fabOverlay.classList.remove('multiple-menus');
+            }
+        } else {
+            fabOverlay.classList.remove('active', 'multiple-menus');
+        }
+    }
+    
+    // Esponi la funzione globalmente per l'uso in altri FAB
+    window.updateOverlayState = updateOverlayState;
+}
+
+// Funzione per inizializzare il FAB Excel
+function initializeExcelFAB() {
+    const fabExcelMain = document.getElementById('fab-excel-main');
+    const fabExcelMenu = document.getElementById('fab-excel-menu');
+    const fabExportExcel = document.getElementById('fab-export-excel');
+    const fabImportExcel = document.getElementById('fab-import-excel');
+    const fabDownloadTemplate = document.getElementById('fab-download-template');
+    
+    if (!fabExcelMain || !fabExcelMenu) {
+        console.log('Elementi FAB Excel non trovati nel DOM - probabilmente non su mobile');
+        return;
+    }
+    
+    let isExcelExpanded = false;
+    
+    // Funzione per aprire/chiudere il menu FAB Excel
+    function toggleExcelFABMenu() {
+        isExcelExpanded = !isExcelExpanded;
+        
+        if (isExcelExpanded) {
+            // Apri il menu Excel
+            fabExcelMain.classList.add('expanded');
+            fabExcelMenu.classList.add('expanded');
+            fabExcelMain.innerHTML = '✕'; // Icona di chiusura
+        } else {
+            // Chiudi il menu Excel
+            fabExcelMain.classList.remove('expanded');
+            fabExcelMenu.classList.remove('expanded');
+            fabExcelMain.innerHTML = '📋'; // Icona Excel
+        }
+        
+        console.log(`FAB Excel menu ${isExcelExpanded ? 'aperto' : 'chiuso'}`);
+        
+        // Aggiorna l'overlay se necessario
+        if (typeof window.updateOverlayState === 'function') {
+            window.updateOverlayState();
+        }
+    }
+    
+    // Event listeners
+    fabExcelMain.addEventListener('click', () => {
+        // Effetto ripple
+        fabExcelMain.classList.add('clicked');
+        setTimeout(() => fabExcelMain.classList.remove('clicked'), 600);
+        
+        toggleExcelFABMenu();
+    });
+    
+    // Collega i bottoni FAB Excel alle funzioni esistenti
+    if (fabExportExcel) {
+        fabExportExcel.addEventListener('click', () => {
+            toggleExcelFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                // Trigger dell'evento click sul bottone desktop
+                document.getElementById('export-excel')?.click();
+            }, 200);
+        });
+    }
+    
+    if (fabImportExcel) {
+        fabImportExcel.addEventListener('click', () => {
+            toggleExcelFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                // Trigger dell'evento click sul bottone desktop
+                document.getElementById('import-excel')?.click();
+            }, 200);
+        });
+    }
+    
+    if (fabDownloadTemplate) {
+        fabDownloadTemplate.addEventListener('click', () => {
+            toggleExcelFABMenu(); // Chiudi il menu
+            setTimeout(() => {
+                // Trigger dell'evento click sul bottone desktop
+                document.getElementById('download-template')?.click();
+            }, 200);
+        });
+    }
+    
+    // Chiudi il menu Excel quando si apre il menu principale e viceversa
+    // (questa logica è già gestita nelle funzioni toggle)
+    
+    console.log('FAB Excel inizializzato con successo');
+}
 
 // Inizializzazione dell'applicazione
 async function init() {
     // Carica header e footer
     getHeaderAndFooter();
     
+    // Inizializza le statistiche a zero
+    initializeStatistics();
+    
     // Carica i dati dalla API
     await loadData();
 
-    // Aggiungi evento per il pulsante "Aggiungi Record"
-    const addRecordBtn = document.querySelector('.add-btn');
-    if (addRecordBtn) {
-        addRecordBtn.removeEventListener('click', openCreatePopup); // Rimuovi eventuali listener esistenti
-        addRecordBtn.addEventListener('click', openCreatePopup);
-    } 
-    else console.error('Pulsante "Aggiungi Record" non trovato.');
+    // Aggiungi eventi per i pulsanti "Aggiungi Uscita" e "Aggiungi Entrata"
+    const addExpenseBtn = document.getElementById('add-expense-btn');
+    const addIncomeBtn = document.getElementById('add-income-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const togglePaginationBtn = document.getElementById('toggle-pagination');
+    
+    if (addExpenseBtn) {
+        addExpenseBtn.removeEventListener('click', openExpensePopup);
+        addExpenseBtn.addEventListener('click', openExpensePopup);
+    } else {
+        console.error('Pulsante "Aggiungi Uscita" non trovato.');
+    }
+    
+    if (addIncomeBtn) {
+        addIncomeBtn.removeEventListener('click', openIncomePopup);
+        addIncomeBtn.addEventListener('click', openIncomePopup);
+    } else {
+        console.error('Pulsante "Aggiungi Entrata" non trovato.');
+    }
+    
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.removeEventListener('click', deleteSelectedRecords);
+        deleteSelectedBtn.addEventListener('click', deleteSelectedRecords);
+    } else {
+        console.error('Pulsante "Elimina Selezionati" non trovato.');
+    }
+    
+    // Gestione toggle paginazione
+    if (togglePaginationBtn) {
+        let isPaginationEnabled = false;
+        
+        togglePaginationBtn.addEventListener('click', () => {
+            isPaginationEnabled = !isPaginationEnabled;
+            
+            if (isPaginationEnabled) {
+                togglePaginationBtn.textContent = '📋 Disabilita Paginazione';
+                togglePaginationBtn.classList.add('active');
+                togglePagination(true);
+                toast.info('Paginazione abilitata - Caricamento di 20 record per pagina');
+            } else {
+                togglePaginationBtn.textContent = '📄 Abilita Paginazione';
+                togglePaginationBtn.classList.remove('active');
+                togglePagination(false);
+                toast.info('Paginazione disabilitata - Caricamento di tutti i record');
+            }
+        });
+    }
     
     // Configura event listeners per la tabella
     setupTableEventListeners();
     
     // Inizializza funzionalità Excel
     initializeExcelFeatures();
+    
+    // Inizializza il toggle dei filtri
+    initializeFiltersToggle();
+    
+    // Inizializza il FAB mobile
+    initializeMobileFAB();
+    
+    // Inizializza il FAB Excel
+    initializeExcelFAB();
 }
 
 // Avvia l'applicazione quando il DOM è pronto
