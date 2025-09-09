@@ -37,16 +37,6 @@ class HandleExpenses extends ApiService {
 
             const result = await response.json();
             
-            // Gestisce la nuova struttura della risposta
-            if (getAllData) {
-                // Per compatibilità, restituisce solo i dati
-                return {
-                    success: result.success,
-                    data: result.data?.activities || [],
-                    message: result.message
-                };
-            }
-            
             // Restituisce la risposta completa con la nuova struttura
             return result;
 
@@ -169,26 +159,14 @@ class HandleExpenses extends ApiService {
 
     // Metodo per ottenere dati paginati con metadati completi
     async getPaginatedUserExpenses(page = 1, limit = 50) {
-        const result = await this.getListByUser(page, limit, false);
-        
-        // Adatta la struttura alla nuova risposta API
-        const pagination = result.data?.pagination || {};
-        
-        return {
-            success: result.success,
-            data: result.data?.activities || [],
-            pagination: {
-                currentPage: pagination.currentPage || page,
-                totalPages: pagination.totalPages || 1,
-                totalRecords: pagination.totalItems || 0,
-                limit: pagination.itemsPerPage || limit,
-                hasNextPage: pagination.hasNextPage || false,
-                hasPrevPage: pagination.hasPrevPage || false,
-                nextPage: pagination.nextPage || null,
-                prevPage: pagination.prevPage || null
-            },
-            message: result.message
-        };
+        try {
+            const result = await this.getListByUser(page, limit, false);
+            
+            return result;
+        } catch (error) {
+            console.error('Errore:', error);
+            throw error;
+        }
     }
 
     // Metodo per ottenere tutti i dati concatenando le pagine (utile per grandi dataset)

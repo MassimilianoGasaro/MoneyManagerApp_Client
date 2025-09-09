@@ -1,3 +1,5 @@
+import toast from "./toast.js";
+import { HandleExpenses } from './expensesFunction.js';
 // Classe avanzata per gestire la paginazione completa
 export class PaginationManager {
     constructor(expensesService, tableManager) {
@@ -19,6 +21,9 @@ export class PaginationManager {
         this.pageSizeSelect = null;
         
         this.initializeUI();
+
+        // Inizializza l'istanza per il service delle spese
+        this.expensesService = new HandleExpenses();
     }
 
     // Inizializza l'interfaccia utente della paginazione
@@ -133,23 +138,17 @@ export class PaginationManager {
         this.updateLoadingState(true);
         
         try {
-            const result = await fetchRecordsPaginated(page, this.limit);
+            const result = await this.#fetchRecordsPaginated(page, this.limit);
             
-            this.currentPage = result.pagination.currentPage;
+            this.currentPage = result.pagination.page;
             this.totalPages = result.pagination.totalPages;
-            this.totalRecords = result.pagination.totalRecords;
-            
+            this.totalRecords = result.pagination.total;
+
             // Aggiorna la tabella con i nuovi dati
-            this.tableManager.setData(result.records);
-            
-            // Aggiorna le statistiche solo per i dati della pagina corrente
-            updateStatistics(result.records);
+            this.tableManager.setData(result.data);
             
             // Aggiorna i controlli di paginazione
             this.updatePaginationControls();
-            
-            // Aggiorna il filtro dei tipi
-            populateTypeFilter(result.records);
             
             return result;
         } catch (error) {
@@ -158,6 +157,20 @@ export class PaginationManager {
         } finally {
             this.isLoading = false;
             this.updateLoadingState(false);
+        }
+    }
+
+    async #fetchRecordsPaginated(page = 1, limit = 50) {
+        try {
+            const response = await this.expensesService.getPaginatedUserExpenses(page, limit);
+            if (!response.success) {
+                toast.error("Errore nel recupero dei dati: " + response.message);
+                throw new Error(`HTTP error! status: ${response.success}`);
+            }
+            return response;
+        } catch (error) {
+            console.error('Errore nel fetch paginato dei record:', error);
+            throw new Error(`${error}`);
         }
     }
 

@@ -90,34 +90,6 @@ async function fetchRecords() {
     }
 }
 
-// Funzione alternativa per caricamento paginato (per uso futuro)
-async function fetchRecordsPaginated(page = 1, limit = 50) {
-    try {
-        const response = await expensesService.getPaginatedUserExpenses(page, limit);
-        if (!response.success) {
-            toast.error("Errore nel recupero dei dati: " + response.message);
-            throw new Error(`HTTP error! status: ${response.success}`);
-        }
-        return {
-            records: response.data,
-            pagination: response.pagination
-        };
-    } catch (error) {
-        console.error('Errore nel fetch paginato dei record:', error);
-        return {
-            records: [],
-            pagination: {
-                currentPage: 1,
-                totalPages: 1,
-                totalRecords: 0,
-                limit: limit,
-                hasNextPage: false,
-                hasPrevPage: false
-            }
-        };
-    }
-}
-
 // Funzione per aggiornare le statistiche nella barra
 function updateStatistics(records) {
     // Elementi della barra statistiche
