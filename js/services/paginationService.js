@@ -1,7 +1,6 @@
-import toast from "./toast.js";
-import { HandleExpenses } from './expensesFunction.js';
+import toast from "../shared/toast.js";
 // Classe avanzata per gestire la paginazione completa
-export class PaginationManager {
+export class PaginationService {
     constructor(expensesService, tableManager) {
         this.expensesService = expensesService;
         this.tableManager = tableManager;
@@ -21,9 +20,6 @@ export class PaginationManager {
         this.pageSizeSelect = null;
         
         this.initializeUI();
-
-        // Inizializza l'istanza per il service delle spese
-        this.expensesService = new HandleExpenses();
     }
 
     // Inizializza l'interfaccia utente della paginazione

@@ -1,5 +1,5 @@
 import { ApiService } from './apiService.js';
-class HandleExpenses extends ApiService {
+class ExpensesService extends ApiService {
     #apiUrl = null;
 
     constructor() {
@@ -209,5 +209,5 @@ class HandleExpenses extends ApiService {
     }
 }
 
-export { HandleExpenses };
+export default new ExpensesService();
 

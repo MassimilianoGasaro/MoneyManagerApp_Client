@@ -1,6 +1,6 @@
 import { ApiService } from './apiService.js';
 
-class HandleUsers extends ApiService {
+class AuthService extends ApiService {
     #apiUrl = null;
 
     constructor() {
@@ -69,19 +69,11 @@ class HandleUsers extends ApiService {
 
         } catch (error) {
             console.error('Errore durante il logout:', error);
-            // Anche se c'è un errore, rimuovi i dati locali
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user_id');
             throw error;
         }
     }
 }
 
-// Crea un'istanza della classe e esporta i metodi
-const userService = new HandleUsers();
+// Esporta un'istanza della classe
+export default new AuthService();
 
-export default {
-    login: userService.login.bind(userService),
-    register: userService.register.bind(userService),
-    logout: userService.logout.bind(userService)
-};

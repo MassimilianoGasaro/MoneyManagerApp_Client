@@ -1,25 +1,19 @@
-import { getHeaderAndFooter } from "./import.js";
-import { DraggablePopup } from './popup.js';
-import { HandleExpenses } from './expensesFunction.js';
-import { ExcelService } from './excelService.js';
+import { getHeaderAndFooter } from "./shared/header.js";
+import { DraggablePopup } from './shared/popup.js';
+import expensesService from './services/expensesService.js';
+import typologiesService from "./services/typologiesService.js";
+import { ExcelService } from './services/excelService.js';
 import { TableManager } from './tableManager.js';
-import toast from "./toast.js";
-import { HandleTypologies } from "./handleTypes.js";
-import { PaginationManager } from "./paginationManager.js";
-
-// Istanza globale del servizio API
-const expensesService = new HandleExpenses();
-// Istanza globale del servizio per le tipologie
-const typologiesService = new HandleTypologies();
+import toast from "./shared/toast.js";
+import { PaginationService } from "./services/paginationService.js";
 
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
+// Imposta il callback per aggiornare le statistiche quando i dati cambiano
+tableManager.setOnDataChange(updateStatistics);
 
 // Istanza globale del gestore paginazione
 let paginationManager = null;
-
-// Imposta il callback per aggiornare le statistiche quando i dati cambiano
-tableManager.setOnDataChange(updateStatistics);
 
 // Istanze globali inizializzate a null
 let createPopup = null;
@@ -717,7 +711,7 @@ function togglePagination(enabled = true) {
     if (enabled) {
         // Abilita la paginazione
         if (!paginationManager) {
-            paginationManager = new PaginationManager(expensesService, tableManager);
+            paginationManager = new PaginationService(expensesService, tableManager);
         }
         paginationManager.setEnabled(true);
         paginationManager.loadPage(1); // Carica la prima pagina

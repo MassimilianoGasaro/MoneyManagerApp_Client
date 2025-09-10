@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/main.css">
-    <title>Gestione Spese</title>
-    <!-- SheetJS per Excel Import/Export -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <title>Gestione Spese - Dashboard</title>
     <!-- Route Guard Script -->
     <script type="module">
-        import { initRouteGuard } from './js/route-guard.js';
-        
+        import { initRouteGuard } from './js/middlewares/route-guard.js'
         // Controlla l'autenticazione prima di caricare la pagina
         if (!initRouteGuard()) {
             // Se l'autenticazione fallisce, lo script si ferma qui
@@ -271,6 +268,10 @@
 
     <!-- Footer -->
     <div id="footer"></div>
+
+    <!-- SheetJS per Excel Import/Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js" defer></script>
+
     <script src="./js/main.js" type="module" defer></script>
 </body>
 </html>
