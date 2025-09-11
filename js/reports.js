@@ -1,9 +1,6 @@
-import { getHeaderAndFooter } from "./import.js";
-import { HandleExpenses } from './expensesFunction.js';
-import toast from "./toast.js";
-
-// Istanza globale del servizio API
-const expensesService = new HandleExpenses();
+import { getHeaderAndFooter } from "./shared/header.js";
+import expensesService from './services/expensesService.js';
+import toast from "./shared/toast.js";
 
 // Variabili globali
 let currentChart = null;

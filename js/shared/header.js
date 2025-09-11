@@ -1,4 +1,4 @@
-import usersFunctions from "./usersFunction.js";
+import authService from "../services/authService.js";
 import toast from "./toast.js";
 import authManager from "./auth.js";
 
@@ -6,18 +6,17 @@ async function handleLogout(e) {
     e.preventDefault();
 
     try {
-        const response = await usersFunctions.logout();
+        const response = await authService.logout();
         if (response.success) {
             localStorage.removeItem('authToken');
             localStorage.removeItem('user_id');
-            toast.success('Logout effettuato con successo!');
-            setTimeout(() => authManager.redirectToLogin(), 100);
+            toast.success('Logout effettuato con successo!', 2000, () => authManager.redirectToLogin());
         } else {
             toast.error(`Errore durante il logout: ${response.message}`);
         }
     } catch (error) {
         console.error('Errore durante il logout:', error);
-        toast.show('Errore durante il logout');
+        toast.error('Errore durante il logout');
     };
 
 }
@@ -103,6 +102,7 @@ function updateAuthUI() {
         });
     }
 }
+
 // per caricare header e footer in modo dinamico
 export function getHeaderAndFooter() {
     // Determina il base path per GitHub Pages
@@ -116,10 +116,6 @@ export function getHeaderAndFooter() {
     .then(([headerData, footerData]) => {
         document.getElementById("header").innerHTML = headerData;
         document.getElementById("footer").innerHTML = footerData;
-
-        // const login = document.getElementById("login");
-        // const dashboard = document.getElementById("dashboard");
-        // const reports = document.getElementById("reports");
 
         initHamburgerMenu();    
         

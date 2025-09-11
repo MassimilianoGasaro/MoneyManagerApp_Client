@@ -204,9 +204,6 @@ export class TableManager {
         if (this.onDataChange && typeof this.onDataChange === 'function') {
             this.onDataChange(this.filteredData);
         }
-        
-        // Le selezioni vengono gestite direttamente in updateTable()
-        // Non pulire automaticamente qui per permettere il mantenimento delle selezioni
     }
 
     // Toggle ordinamento per colonna

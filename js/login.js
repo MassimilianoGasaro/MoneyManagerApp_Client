@@ -1,6 +1,6 @@
-import { getHeaderAndFooter } from "./import.js";
-import usersFunctions from "./usersFunction.js";
-import toast from "./toast.js";
+import { getHeaderAndFooter } from "./shared/header.js";
+import usersFunctions from "./services/authService.js";
+import toast from "./shared/toast.js";
 
 // Funzione per gestire il login
 async function handleLogin(event) {

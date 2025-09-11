@@ -1,10 +1,10 @@
 // Sistema di Toast globale
 class ToastManager {
     constructor() {
-        this.createToastContainer();
+        this.#createToastContainer();
     }
 
-    createToastContainer() {
+    #createToastContainer() {
         // Crea il contenitore dei toast se non esiste
         if (!document.getElementById('toast-container')) {
             const container = document.createElement('div');
@@ -14,7 +14,7 @@ class ToastManager {
         }
     }
 
-    show(message, type = 'info', duration = 3000) {
+    #show(message, type = 'info', duration = 3000, callback = null) {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         
@@ -36,34 +36,30 @@ class ToastManager {
         setTimeout(() => {
             toast.classList.add('toast-hide');
             setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
+                if (toast.parentElement) toast.remove()
+                if (callback && typeof callback === "function") callback();
             }, 300);
         }, duration);
 
         return toast;
     }
 
-    success(message, duration = 3000) {
-        return this.show(message, 'success', duration);
+    success(message, duration = 3000, callback = null) {
+        return this.#show(message, 'success', duration, callback);
     }
 
-    error(message, duration = 5000) {
-        return this.show(message, 'error', duration);
+    error(message, duration = 5000, callback = null) {
+        return this.#show(message, 'error', duration, callback);
     }
 
-    warning(message, duration = 4000) {
-        return this.show(message, 'warning', duration);
+    warning(message, duration = 4000, callback = null) {
+        return this.#show(message, 'warning', duration, callback);
     }
 
-    info(message, duration = 3000) {
-        return this.show(message, 'info', duration);
+    info(message, duration = 3000, callback = null) {
+        return this.#show(message, 'info', duration, callback);
     }
 }
 
 // Crea un'istanza globale
-const toast = new ToastManager();
-
-// Esporta per l'uso nei moduli
-export default toast;
+export default new ToastManager();

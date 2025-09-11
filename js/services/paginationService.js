@@ -1,10 +1,11 @@
+import toast from "../shared/toast.js";
 // Classe avanzata per gestire la paginazione completa
-export class PaginationManager {
+class PaginationService {
     constructor(expensesService, tableManager) {
         this.expensesService = expensesService;
         this.tableManager = tableManager;
         this.currentPage = 1;
-        this.limit = 20; // Record per pagina
+        this.limit = 10; 
         this.totalPages = 1;
         this.totalRecords = 0;
         this.isLoading = false;
@@ -18,22 +19,22 @@ export class PaginationManager {
         this.lastBtn = null;
         this.pageSizeSelect = null;
         
-        this.initializeUI();
+        this.#initializeUI();
     }
 
     // Inizializza l'interfaccia utente della paginazione
-    initializeUI() {
+    #initializeUI() {
         // Cerca il container esistente o lo crea
         this.paginationContainer = document.getElementById('pagination-container');
         if (!this.paginationContainer) {
-            this.createPaginationUI();
+            this.#createPaginationUI();
         }
         
-        this.bindEvents();
+        this.#bindEvents();
     }
 
     // Crea l'interfaccia utente della paginazione
-    createPaginationUI() {
+    #createPaginationUI() {
         const container = document.createElement('div');
         container.id = 'pagination-container';
         container.className = 'pagination-container';
@@ -41,29 +42,29 @@ export class PaginationManager {
         container.innerHTML = `
             <div class="pagination-info">
                 <span id="pagination-info-text">Caricamento...</span>
+                <div class="pagination-controls">
+                    <button id="first-page-btn" class="btn pagination-btn" title="Prima pagina">⏮️</button>
+                    <button id="prev-page-btn" class="btn pagination-btn" title="Pagina precedente">⬅️</button>
+                    <div class="pagination-pages" id="pagination-pages">
+                        <!-- Numeri di pagina dinamici -->
+                    </div>
+                    <button id="next-page-btn" class="btn pagination-btn" title="Pagina successiva">➡️</button>
+                    <button id="last-page-btn" class="btn pagination-btn" title="Ultima pagina">⏭️</button>
+                </div>
+                <div class="pagination-goto">
+                    <label for="goto-page-input">Vai alla pagina:</label>
+                    <input type="number" id="goto-page-input" min="1" max="1" value="1">
+                    <button id="goto-page-btn" class="btn">Vai</button>
+                </div>
                 <div class="pagination-size">
                     <label for="page-size-select">Record per pagina:</label>
                     <select id="page-size-select">
-                        <option value="10">10</option>
-                        <option value="20" selected>20</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
                 </div>
-            </div>
-            <div class="pagination-controls">
-                <button id="first-page-btn" class="btn pagination-btn" title="Prima pagina">⏮️</button>
-                <button id="prev-page-btn" class="btn pagination-btn" title="Pagina precedente">⬅️</button>
-                <div class="pagination-pages" id="pagination-pages">
-                    <!-- Numeri di pagina dinamici -->
-                </div>
-                <button id="next-page-btn" class="btn pagination-btn" title="Pagina successiva">➡️</button>
-                <button id="last-page-btn" class="btn pagination-btn" title="Ultima pagina">⏭️</button>
-            </div>
-            <div class="pagination-goto">
-                <label for="goto-page-input">Vai alla pagina:</label>
-                <input type="number" id="goto-page-input" min="1" max="1" value="1">
-                <button id="goto-page-btn" class="btn">Vai</button>
             </div>
         `;
         
@@ -77,7 +78,7 @@ export class PaginationManager {
     }
 
     // Collega gli eventi
-    bindEvents() {
+    #bindEvents() {
         this.pageInfo = document.getElementById('pagination-info-text');
         this.prevBtn = document.getElementById('prev-page-btn');
         this.nextBtn = document.getElementById('next-page-btn');
@@ -130,26 +131,20 @@ export class PaginationManager {
         if (this.isLoading) return;
         
         this.isLoading = true;
-        this.updateLoadingState(true);
+        this.#updateLoadingState(true);
         
         try {
-            const result = await fetchRecordsPaginated(page, this.limit);
+            const result = await this.#fetchRecordsPaginated(page, this.limit);
             
-            this.currentPage = result.pagination.currentPage;
+            this.currentPage = result.pagination.page;
             this.totalPages = result.pagination.totalPages;
-            this.totalRecords = result.pagination.totalRecords;
-            
+            this.totalRecords = result.pagination.total;
+
             // Aggiorna la tabella con i nuovi dati
-            this.tableManager.setData(result.records);
-            
-            // Aggiorna le statistiche solo per i dati della pagina corrente
-            updateStatistics(result.records);
+            this.tableManager.setData(result.data);
             
             // Aggiorna i controlli di paginazione
             this.updatePaginationControls();
-            
-            // Aggiorna il filtro dei tipi
-            populateTypeFilter(result.records);
             
             return result;
         } catch (error) {
@@ -157,7 +152,21 @@ export class PaginationManager {
             toast.error('Errore nel caricamento dei dati');
         } finally {
             this.isLoading = false;
-            this.updateLoadingState(false);
+            this.#updateLoadingState(false);
+        }
+    }
+
+    async #fetchRecordsPaginated(page = 1, limit = 50) {
+        try {
+            const response = await this.expensesService.getPaginatedUserExpenses(page, limit);
+            if (!response.success) {
+                toast.error("Errore nel recupero dei dati: " + response.message);
+                throw new Error(`HTTP error! status: ${response.success}`);
+            }
+            return response;
+        } catch (error) {
+            console.error('Errore nel fetch paginato dei record:', error);
+            throw new Error(`${error}`);
         }
     }
 
@@ -299,7 +308,7 @@ export class PaginationManager {
     }
 
     // Aggiorna lo stato di caricamento
-    updateLoadingState(isLoading) {
+    #updateLoadingState(isLoading) {
         const container = this.paginationContainer;
         if (container) {
             if (isLoading) {
@@ -331,14 +340,14 @@ export class PaginationManager {
     }
 
     // Nasconde i controlli di paginazione
-    hide() {
+    #hide() {
         if (this.paginationContainer) {
             this.paginationContainer.style.display = 'none';
         }
     }
 
     // Mostra i controlli di paginazione
-    show() {
+    #show() {
         if (this.paginationContainer) {
             this.paginationContainer.style.display = 'block';
         }
@@ -347,10 +356,23 @@ export class PaginationManager {
     // Abilita/disabilita la paginazione
     setEnabled(enabled) {
         if (enabled) {
-            this.show();
+            this.#show();
         } else {
-            this.hide();
+            this.#hide();
         }
     }
+}
+
+// Esporta classe, non istanza
+export { PaginationService };
+
+// Factory function per istanza singleton
+export function createPaginationService(expensesService, tableManager) {
+    return new PaginationService(expensesService, tableManager);
+}
+
+// Getter per istanza esistente
+export function getPaginationService() {
+    return PaginationService.instance;
 }
 

@@ -1,6 +1,6 @@
 import { ApiService } from "./apiService.js";
 
-export class HandleTypologies extends ApiService {
+class TypologiesService extends ApiService {
   constructor() {
     super("expense-types");
   }
@@ -66,3 +66,5 @@ export class HandleTypologies extends ApiService {
   }
 
 }
+
+export default new TypologiesService();

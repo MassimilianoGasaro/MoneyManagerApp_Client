@@ -10,6 +10,7 @@ header {
     align-items: center;
     position: relative;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 70px;
 }
 
 /* Logo */
@@ -54,7 +55,7 @@ header {
 
 .desktop-nav .nav-links li a:hover {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--text-color-hover);
     text-decoration: none;
 }
 

@@ -1,5 +1,5 @@
 // Route Guard per proteggere le pagine
-import authManager from './auth.js';
+import authManager from '../shared/auth.js';
 
 // Lista delle pagine protette
 const protectedPages = [

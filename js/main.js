@@ -1,25 +1,19 @@
-import { getHeaderAndFooter } from "./import.js";
-import { DraggablePopup } from './popup.js';
-import { HandleExpenses } from './expensesFunction.js';
-import { ExcelService } from './excelService.js';
+import { getHeaderAndFooter } from "./shared/header.js";
+import { DraggablePopup } from './shared/popup.js';
+import expensesService from './services/expensesService.js';
+import typologiesService from "./services/typologiesService.js";
+import { ExcelService } from './services/excelService.js';
 import { TableManager } from './tableManager.js';
-import toast from "./toast.js";
-import { HandleTypologies } from "./handleTypes.js";
-import { PaginationManager } from "./paginationManager.js";
-
-// Istanza globale del servizio API
-const expensesService = new HandleExpenses();
-// Istanza globale del servizio per le tipologie
-const typologiesService = new HandleTypologies();
+import toast from "./shared/toast.js";
+import { createPaginationService, getPaginationService } from './services/paginationService.js';
 
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
-
-// Istanza globale del gestore paginazione
-let paginationManager = null;
-
 // Imposta il callback per aggiornare le statistiche quando i dati cambiano
 tableManager.setOnDataChange(updateStatistics);
+
+// Istanza paginazione
+let paginationService = null;
 
 // Istanze globali inizializzate a null
 let createPopup = null;
@@ -87,34 +81,6 @@ async function fetchRecords() {
     } catch (error) {
         console.error('Errore nel fetch dei record:', error);
         return [];
-    }
-}
-
-// Funzione alternativa per caricamento paginato (per uso futuro)
-async function fetchRecordsPaginated(page = 1, limit = 50) {
-    try {
-        const response = await expensesService.getPaginatedUserExpenses(page, limit);
-        if (!response.success) {
-            toast.error("Errore nel recupero dei dati: " + response.message);
-            throw new Error(`HTTP error! status: ${response.success}`);
-        }
-        return {
-            records: response.data,
-            pagination: response.pagination
-        };
-    } catch (error) {
-        console.error('Errore nel fetch paginato dei record:', error);
-        return {
-            records: [],
-            pagination: {
-                currentPage: 1,
-                totalPages: 1,
-                totalRecords: 0,
-                limit: limit,
-                hasNextPage: false,
-                hasPrevPage: false
-            }
-        };
     }
 }
 
@@ -723,14 +689,9 @@ async function deleteSelectedRecords() {
 
 // Funzione per caricare i dati
 async function loadData(preserveSelections = false) {
-    // Se la paginazione è abilitata, usa quella
-    if (paginationManager && paginationManager.currentPage) {
-        await paginationManager.loadPage(paginationManager.currentPage);
-    } else {
-        // Altrimenti usa il metodo tradizionale
-        const records = await fetchRecords();
-        populateTable(records);
-    }
+    paginationService = createPaginationService(expensesService, tableManager);
+
+    await paginationService.loadPage();
     
     // Pulisci le selezioni solo se esplicitamente richiesto
     if (!preserveSelections) {
@@ -740,26 +701,7 @@ async function loadData(preserveSelections = false) {
     }
 }
 
-// Funzione per abilitare/disabilitare la paginazione
-function togglePagination(enabled = true) {
-    if (enabled) {
-        // Abilita la paginazione
-        if (!paginationManager) {
-            paginationManager = new PaginationManager(expensesService, tableManager);
-        }
-        paginationManager.setEnabled(true);
-        paginationManager.loadPage(1); // Carica la prima pagina
-    } else {
-        // Disabilita la paginazione e carica tutti i dati
-        if (paginationManager) {
-            paginationManager.setEnabled(false);
-        }
-        loadData(); // Carica tutti i dati
-    }
-}
-
 // ===== FUNZIONALITÀ EXCEL =====
-
 // Inizializza le funzionalità Excel
 function initializeExcelFeatures() {
     const exportBtn = document.getElementById('export-excel');
@@ -1098,44 +1040,6 @@ function initializeStatistics() {
     }
 }
 
-// Funzione per inizializzare il toggle dei filtri
-function initializeFiltersToggle() {
-    const toggleBtn = document.getElementById('toggle-filters');
-    const filtersSection = document.getElementById('filters-section');
-    
-    if (!toggleBtn || !filtersSection) {
-        console.error('Bottone toggle filtri o sezione filtri non trovati');
-        return;
-    }
-    
-    // Stato iniziale: collassato
-    let isExpanded = false;
-    
-    toggleBtn.addEventListener('click', () => {
-        isExpanded = !isExpanded;
-        
-        if (isExpanded) {
-            // Espandi i filtri
-            filtersSection.classList.remove('collapsed');
-            filtersSection.classList.add('expanded');
-            toggleBtn.textContent = '🔼 Nascondi Filtri';
-            toggleBtn.classList.add('active');
-        } else {
-            // Collassa i filtri
-            filtersSection.classList.remove('expanded');
-            filtersSection.classList.add('collapsed');
-            toggleBtn.textContent = '🔍 Mostra Filtri';
-            toggleBtn.classList.remove('active');
-        }
-        
-        console.log(`Filtri ${isExpanded ? 'espansi' : 'collassati'}`);
-    });
-    
-    // Imposta stato iniziale
-    filtersSection.classList.add('collapsed');
-    toggleBtn.textContent = '🔍 Mostra Filtri';
-}
-
 // Funzione per inizializzare il FAB mobile
 function initializeMobileFAB() {
     const fabMain = document.getElementById('fab-main');
@@ -1414,7 +1318,6 @@ async function init() {
     const addExpenseBtn = document.getElementById('add-expense-btn');
     const addIncomeBtn = document.getElementById('add-income-btn');
     const deleteSelectedBtn = document.getElementById('delete-selected-btn');
-    const togglePaginationBtn = document.getElementById('toggle-pagination');
     
     if (addExpenseBtn) {
         addExpenseBtn.removeEventListener('click', openExpensePopup);
@@ -1437,35 +1340,11 @@ async function init() {
         console.error('Pulsante "Elimina Selezionati" non trovato.');
     }
     
-    // Gestione toggle paginazione
-    if (togglePaginationBtn) {
-        let isPaginationEnabled = false;
-        
-        togglePaginationBtn.addEventListener('click', () => {
-            isPaginationEnabled = !isPaginationEnabled;
-            
-            if (isPaginationEnabled) {
-                togglePaginationBtn.textContent = '📋 Disabilita Paginazione';
-                togglePaginationBtn.classList.add('active');
-                togglePagination(true);
-                toast.info('Paginazione abilitata - Caricamento di 20 record per pagina');
-            } else {
-                togglePaginationBtn.textContent = '📄 Abilita Paginazione';
-                togglePaginationBtn.classList.remove('active');
-                togglePagination(false);
-                toast.info('Paginazione disabilitata - Caricamento di tutti i record');
-            }
-        });
-    }
-    
     // Configura event listeners per la tabella
     setupTableEventListeners();
     
     // Inizializza funzionalità Excel
     initializeExcelFeatures();
-    
-    // Inizializza il toggle dei filtri
-    initializeFiltersToggle();
     
     // Inizializza il FAB mobile
     initializeMobileFAB();
