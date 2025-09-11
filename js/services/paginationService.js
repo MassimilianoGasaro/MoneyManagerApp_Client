@@ -1,11 +1,11 @@
 import toast from "../shared/toast.js";
 // Classe avanzata per gestire la paginazione completa
-export class PaginationService {
+class PaginationService {
     constructor(expensesService, tableManager) {
         this.expensesService = expensesService;
         this.tableManager = tableManager;
         this.currentPage = 1;
-        this.limit = 20; // Record per pagina
+        this.limit = 10; 
         this.totalPages = 1;
         this.totalRecords = 0;
         this.isLoading = false;
@@ -42,29 +42,29 @@ export class PaginationService {
         container.innerHTML = `
             <div class="pagination-info">
                 <span id="pagination-info-text">Caricamento...</span>
+                <div class="pagination-controls">
+                    <button id="first-page-btn" class="btn pagination-btn" title="Prima pagina">⏮️</button>
+                    <button id="prev-page-btn" class="btn pagination-btn" title="Pagina precedente">⬅️</button>
+                    <div class="pagination-pages" id="pagination-pages">
+                        <!-- Numeri di pagina dinamici -->
+                    </div>
+                    <button id="next-page-btn" class="btn pagination-btn" title="Pagina successiva">➡️</button>
+                    <button id="last-page-btn" class="btn pagination-btn" title="Ultima pagina">⏭️</button>
+                </div>
+                <div class="pagination-goto">
+                    <label for="goto-page-input">Vai alla pagina:</label>
+                    <input type="number" id="goto-page-input" min="1" max="1" value="1">
+                    <button id="goto-page-btn" class="btn">Vai</button>
+                </div>
                 <div class="pagination-size">
                     <label for="page-size-select">Record per pagina:</label>
                     <select id="page-size-select">
-                        <option value="10">10</option>
-                        <option value="20" selected>20</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
                 </div>
-            </div>
-            <div class="pagination-controls">
-                <button id="first-page-btn" class="btn pagination-btn" title="Prima pagina">⏮️</button>
-                <button id="prev-page-btn" class="btn pagination-btn" title="Pagina precedente">⬅️</button>
-                <div class="pagination-pages" id="pagination-pages">
-                    <!-- Numeri di pagina dinamici -->
-                </div>
-                <button id="next-page-btn" class="btn pagination-btn" title="Pagina successiva">➡️</button>
-                <button id="last-page-btn" class="btn pagination-btn" title="Ultima pagina">⏭️</button>
-            </div>
-            <div class="pagination-goto">
-                <label for="goto-page-input">Vai alla pagina:</label>
-                <input type="number" id="goto-page-input" min="1" max="1" value="1">
-                <button id="goto-page-btn" class="btn">Vai</button>
             </div>
         `;
         
@@ -131,7 +131,7 @@ export class PaginationService {
         if (this.isLoading) return;
         
         this.isLoading = true;
-        this.updateLoadingState(true);
+        this.#updateLoadingState(true);
         
         try {
             const result = await this.#fetchRecordsPaginated(page, this.limit);
@@ -152,7 +152,7 @@ export class PaginationService {
             toast.error('Errore nel caricamento dei dati');
         } finally {
             this.isLoading = false;
-            this.updateLoadingState(false);
+            this.#updateLoadingState(false);
         }
     }
 
@@ -308,7 +308,7 @@ export class PaginationService {
     }
 
     // Aggiorna lo stato di caricamento
-    updateLoadingState(isLoading) {
+    #updateLoadingState(isLoading) {
         const container = this.paginationContainer;
         if (container) {
             if (isLoading) {
@@ -340,14 +340,14 @@ export class PaginationService {
     }
 
     // Nasconde i controlli di paginazione
-    hide() {
+    #hide() {
         if (this.paginationContainer) {
             this.paginationContainer.style.display = 'none';
         }
     }
 
     // Mostra i controlli di paginazione
-    show() {
+    #show() {
         if (this.paginationContainer) {
             this.paginationContainer.style.display = 'block';
         }
@@ -356,10 +356,23 @@ export class PaginationService {
     // Abilita/disabilita la paginazione
     setEnabled(enabled) {
         if (enabled) {
-            this.show();
+            this.#show();
         } else {
-            this.hide();
+            this.#hide();
         }
     }
+}
+
+// Esporta classe, non istanza
+export { PaginationService };
+
+// Factory function per istanza singleton
+export function createPaginationService(expensesService, tableManager) {
+    return new PaginationService(expensesService, tableManager);
+}
+
+// Getter per istanza esistente
+export function getPaginationService() {
+    return PaginationService.instance;
 }
 

@@ -55,7 +55,7 @@ header {
 
 .desktop-nav .nav-links li a:hover {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--text-color-hover);
     text-decoration: none;
 }
 

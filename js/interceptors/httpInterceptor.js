@@ -155,22 +155,7 @@ class HttpInterceptor {
                 throw error;
             }
 
-            // Parse della risposta
-            const contentType = response.headers.get('content-type');
-            let data;
-
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                data = await response.text();
-            }
-
-            return {
-                success: true,
-                data,
-                status: response.status,
-                headers: response.headers
-            };
+            return response;
 
         } catch (error) {
             // Gestione retry
@@ -191,9 +176,54 @@ class HttpInterceptor {
         }
     }
 
-    // Metodi di convenienza
-    async get(url, options = {}) {
-        return this.request(url, { ...options, method: 'GET' });
+    async get(url, params = {}, options = {}) {
+        // Costruisci URL con parametri
+        const finalUrl = this.#buildUrlWithParams(url, params);
+
+        return this.request(finalUrl, { 
+            ...options,
+            method: 'GET'
+        });
+    }
+
+    // Metodo helper per costruire URL con parametri
+    #buildUrlWithParams(baseUrl, params) {
+        if (!params || Object.keys(params).length === 0) {
+            return baseUrl;
+        }
+
+        // Filtra parametri undefined/null
+        const validParams = Object.entries(params)
+            .filter(([key, value]) => value !== undefined && value !== null && value !== '')
+            .reduce((acc, [key, value]) => {
+                acc[key] = value;
+                return acc;
+            }, {});
+
+        if (Object.keys(validParams).length === 0) {
+            return baseUrl;
+        }
+
+        // Crea URLSearchParams
+        const searchParams = new URLSearchParams();
+        
+        Object.entries(validParams).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                // Gestisce array: ?tags=tag1&tags=tag2
+                value.forEach(item => searchParams.append(key, item));
+            } else if (typeof value === 'object') {
+                // Gestisce oggetti: serializza come JSON
+                searchParams.append(key, JSON.stringify(value));
+            } else {
+                // Valori semplici
+                searchParams.append(key, String(value));
+            }
+        });
+
+        const queryString = searchParams.toString();
+        const separator = baseUrl.includes('?') ? '&' : '?';
+        
+        return `${baseUrl}${separator}${queryString}`;
     }
 
     async post(url, data, options = {}) {
@@ -242,6 +272,5 @@ class HttpInterceptor {
 }
 
 // Crea istanza globale
-const httpInterceptor = new HttpInterceptor();
+export default new HttpInterceptor();
 
-export default httpInterceptor;

@@ -473,7 +473,7 @@ main {
 
 .table-container {
     width: 100%;
-    max-height: 100%; 
+    height: 100%; 
     overflow-y: auto;
     overflow-x: hidden;
     border-radius: 8px;
@@ -500,8 +500,16 @@ main {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.styled-table th, .styled-table td {
+.styled-table th {
+    padding: 0.7rem;
+}
+
+.styled-table td {
     padding: 0.5rem;
+}
+
+.styled-table th, .styled-table td {
+    border: 2px solid var(--background-table);
 }
 
 .styled-table tbody tr:hover {
@@ -1609,7 +1617,7 @@ main {
    PAGINAZIONE
 ============================================================ */
 .pagination-container {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    background: linear-gradient(145deg, var(--background-pagination), #f8f9fa);
     border: 1px solid #e9ecef;
     border-radius: 12px;
     margin: 20px;
@@ -1627,7 +1635,6 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
     flex-wrap: wrap;
     gap: 10px;
 }
@@ -1670,7 +1677,6 @@ main {
     justify-content: center;
     align-items: center;
     gap: 8px;
-    margin-bottom: 15px;
     flex-wrap: wrap;
 }
 
@@ -1743,8 +1749,6 @@ main {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    padding-top: 15px;
-    border-top: 1px solid #e9ecef;
 }
 
 .pagination-goto label {

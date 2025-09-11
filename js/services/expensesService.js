@@ -1,4 +1,5 @@
 import { ApiService } from './apiService.js';
+import httpInterceptor from '../interceptors/httpInterceptor.js';
 class ExpensesService extends ApiService {
     #apiUrl = null;
 
@@ -7,154 +8,103 @@ class ExpensesService extends ApiService {
         this.#apiUrl = this.endpoint;
     }
 
-    async getListByUser(page = 1, limit = 50, getAllData = false) {
-        console.log("Recupero lista spese per l'utente", { page, limit, getAllData });
+    async getListByUser(page = 1, limit = 50) {
         try {
-            const params = new URLSearchParams();
-            const userId = localStorage.getItem('user_id');
-            if (userId) params.append('user_id', userId);
-            
-            // Se getAllData è true, recupera tutti i dati in una volta
-            if (getAllData) {
-                // Impostiamo un limite molto alto per ottenere tutti i dati
-                params.append('page', '1');
-                params.append('limit', '10000');
-            } else {
-                // Paginazione normale
-                params.append('page', page.toString());
-                params.append('limit', limit.toString());
+            const params = {
+                user_id: localStorage.getItem('user_id'),
+                limit: limit,
+                page: page
             }
             
-            const url = `${this.#apiUrl}/user?${params.toString()}`;
+            const url = `${this.#apiUrl}/user`;
             
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
+            const response = await httpInterceptor.get(url, params, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Caricamento spese...',
+                timeout: 15000
             });
 
-            const result = await response.json();
-            
-            // Restituisce la risposta completa con la nuova struttura
-            return result;
+            return await response.json();
 
         } catch (error) {
-            console.error('Errore nel recupero della lista spese:', error);
             throw error;
         }
     }
 
     async addExpense(expense) {
-        // { 
-        //     "name": "seconda spesa", 
-        //     "amount": 10, 
-        //     "description": "test", 
-        //     "date": "2025-07-10T16:20:22.222", 
-        //     "type": "spesa",
-        //     "user_id": "65f4791f5194a6187a44619d"
-        // }
         try {
-            console.log("Aggiungi spesa:", expense);
-            const response = await fetch(`${this.#apiUrl}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify(expense)
+            const response = await httpInterceptor.post(`${this.#apiUrl}`, expense, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Aggiunta spesa...',
+                timeout: 15000
             });
     
             return await response.json();
+
         } catch (error) {
-            console.error('Errore nell\'inserimento del dato:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error;
         }
     }
 
     async getExpenseById(id) {
-        // { 
-        //     "id": "65f4791f5194a6187a44619d" 
-        // }
         try {
-            console.log("Recupero spesa per ID:", id);
-
-            const params = new URLSearchParams();
-            const userId = localStorage.getItem('user_id');
-            if (userId) params.append('user_id', userId);
+            const params = {
+                user_id: localStorage.getItem('user_id'),
+                limit: limit,
+                page: page
+            }
             
-            const response = await fetch(`${this.#apiUrl}/${id}?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
+            const response = await httpInterceptor.get(`${this.#apiUrl}/${id}`, params, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Caricamento spesa...',
+                timeout: 15000
             });
 
             return await response.json();
         } catch (error) {
-            console.error('Errore nel recupero del dato:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error; 
         }
     }
 
     async updateExpenseById(id, expense) {
-        // { 
-        //     "name": "seconda spesa", 
-        //     "amount": 10, 
-        //     "description": "prova modifica", 
-        //     "date": "2025-07-10T16:20:22.222", 
-        //     "type": "spesa",
-        // }
-
         try {
-            console.log("Aggiorna spesa con ID:", id, expense);
-
             const params = new URLSearchParams();
             const userId = localStorage.getItem('user_id');
             if (userId) params.append('user_id', userId);
 
-            const response = await fetch(`${this.#apiUrl}/${id}?${params.toString()}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify(expense)
+            const response = await httpInterceptor.put(`${this.#apiUrl}/${id}?${params.toString()}`, expense, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Aggiornamento spesa...',
+                timeout: 15000
             });
     
             return await response.json();
         } catch (error) {
-            console.error('Errore nell\'aggiornamento del dato:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error; 
         }
     }
 
     async deleteExpenseById(id) {
         try {
-            console.log("Elimina spesa con ID:", id);
             const params = new URLSearchParams();
             const userId = localStorage.getItem('user_id');
             if (userId) params.append('user_id', userId);
             
-            const response = await fetch(`${this.#apiUrl}/${id}?${params.toString()}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
+            const response = await httpInterceptor.delete(`${this.#apiUrl}/${id}?${params.toString()}`, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Eliminazione spesa...',
+                timeout: 15000
             });
     
             return await response.json();
         } catch (error) {
-            console.error('Errore nell\'eliminazione del dato:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error;
         }
-    }
-
-    // Metodo per ottenere tutti i dati senza paginazione (per compatibilità)
-    async getAllUserExpenses() {
-        return await this.getListByUser(1, 10000, true);
     }
 
     // Metodo per ottenere dati paginati con metadati completi

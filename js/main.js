@@ -5,14 +5,15 @@ import typologiesService from "./services/typologiesService.js";
 import { ExcelService } from './services/excelService.js';
 import { TableManager } from './tableManager.js';
 import toast from "./shared/toast.js";
+import { createPaginationService, getPaginationService } from './services/paginationService.js';
 
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
 // Imposta il callback per aggiornare le statistiche quando i dati cambiano
 tableManager.setOnDataChange(updateStatistics);
 
-// Istanza globale del gestore paginazione
-let paginationManager = null;
+// Istanza paginazione
+let paginationService = null;
 
 // Istanze globali inizializzate a null
 let createPopup = null;
@@ -688,14 +689,9 @@ async function deleteSelectedRecords() {
 
 // Funzione per caricare i dati
 async function loadData(preserveSelections = false) {
-    // Se la paginazione è abilitata, usa quella
-    if (paginationManager && paginationManager.currentPage) {
-        await paginationManager.loadPage(paginationManager.currentPage);
-    } else {
-        // Altrimenti usa il metodo tradizionale
-        const records = await fetchRecords();
-        populateTable(records);
-    }
+    paginationService = createPaginationService(expensesService, tableManager);
+
+    await paginationService.loadPage();
     
     // Pulisci le selezioni solo se esplicitamente richiesto
     if (!preserveSelections) {
