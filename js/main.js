@@ -5,7 +5,6 @@ import typologiesService from "./services/typologiesService.js";
 import { ExcelService } from './services/excelService.js';
 import { TableManager } from './tableManager.js';
 import toast from "./shared/toast.js";
-import { PaginationService } from "./services/paginationService.js";
 
 // Istanza globale del gestore tabella
 const tableManager = new TableManager();
@@ -706,26 +705,7 @@ async function loadData(preserveSelections = false) {
     }
 }
 
-// Funzione per abilitare/disabilitare la paginazione
-function togglePagination(enabled = true) {
-    if (enabled) {
-        // Abilita la paginazione
-        if (!paginationManager) {
-            paginationManager = new PaginationService(expensesService, tableManager);
-        }
-        paginationManager.setEnabled(true);
-        paginationManager.loadPage(1); // Carica la prima pagina
-    } else {
-        // Disabilita la paginazione e carica tutti i dati
-        if (paginationManager) {
-            paginationManager.setEnabled(false);
-        }
-        loadData(); // Carica tutti i dati
-    }
-}
-
 // ===== FUNZIONALITÀ EXCEL =====
-
 // Inizializza le funzionalità Excel
 function initializeExcelFeatures() {
     const exportBtn = document.getElementById('export-excel');
@@ -1064,44 +1044,6 @@ function initializeStatistics() {
     }
 }
 
-// Funzione per inizializzare il toggle dei filtri
-function initializeFiltersToggle() {
-    const toggleBtn = document.getElementById('toggle-filters');
-    const filtersSection = document.getElementById('filters-section');
-    
-    if (!toggleBtn || !filtersSection) {
-        console.error('Bottone toggle filtri o sezione filtri non trovati');
-        return;
-    }
-    
-    // Stato iniziale: collassato
-    let isExpanded = false;
-    
-    toggleBtn.addEventListener('click', () => {
-        isExpanded = !isExpanded;
-        
-        if (isExpanded) {
-            // Espandi i filtri
-            filtersSection.classList.remove('collapsed');
-            filtersSection.classList.add('expanded');
-            toggleBtn.textContent = '🔼 Nascondi Filtri';
-            toggleBtn.classList.add('active');
-        } else {
-            // Collassa i filtri
-            filtersSection.classList.remove('expanded');
-            filtersSection.classList.add('collapsed');
-            toggleBtn.textContent = '🔍 Mostra Filtri';
-            toggleBtn.classList.remove('active');
-        }
-        
-        console.log(`Filtri ${isExpanded ? 'espansi' : 'collassati'}`);
-    });
-    
-    // Imposta stato iniziale
-    filtersSection.classList.add('collapsed');
-    toggleBtn.textContent = '🔍 Mostra Filtri';
-}
-
 // Funzione per inizializzare il FAB mobile
 function initializeMobileFAB() {
     const fabMain = document.getElementById('fab-main');
@@ -1380,7 +1322,6 @@ async function init() {
     const addExpenseBtn = document.getElementById('add-expense-btn');
     const addIncomeBtn = document.getElementById('add-income-btn');
     const deleteSelectedBtn = document.getElementById('delete-selected-btn');
-    const togglePaginationBtn = document.getElementById('toggle-pagination');
     
     if (addExpenseBtn) {
         addExpenseBtn.removeEventListener('click', openExpensePopup);
@@ -1403,35 +1344,11 @@ async function init() {
         console.error('Pulsante "Elimina Selezionati" non trovato.');
     }
     
-    // Gestione toggle paginazione
-    if (togglePaginationBtn) {
-        let isPaginationEnabled = false;
-        
-        togglePaginationBtn.addEventListener('click', () => {
-            isPaginationEnabled = !isPaginationEnabled;
-            
-            if (isPaginationEnabled) {
-                togglePaginationBtn.textContent = '📋 Disabilita Paginazione';
-                togglePaginationBtn.classList.add('active');
-                togglePagination(true);
-                toast.info('Paginazione abilitata - Caricamento di 20 record per pagina');
-            } else {
-                togglePaginationBtn.textContent = '📄 Abilita Paginazione';
-                togglePaginationBtn.classList.remove('active');
-                togglePagination(false);
-                toast.info('Paginazione disabilitata - Caricamento di tutti i record');
-            }
-        });
-    }
-    
     // Configura event listeners per la tabella
     setupTableEventListeners();
     
     // Inizializza funzionalità Excel
     initializeExcelFeatures();
-    
-    // Inizializza il toggle dei filtri
-    initializeFiltersToggle();
     
     // Inizializza il FAB mobile
     initializeMobileFAB();

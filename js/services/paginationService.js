@@ -19,22 +19,22 @@ export class PaginationService {
         this.lastBtn = null;
         this.pageSizeSelect = null;
         
-        this.initializeUI();
+        this.#initializeUI();
     }
 
     // Inizializza l'interfaccia utente della paginazione
-    initializeUI() {
+    #initializeUI() {
         // Cerca il container esistente o lo crea
         this.paginationContainer = document.getElementById('pagination-container');
         if (!this.paginationContainer) {
-            this.createPaginationUI();
+            this.#createPaginationUI();
         }
         
-        this.bindEvents();
+        this.#bindEvents();
     }
 
     // Crea l'interfaccia utente della paginazione
-    createPaginationUI() {
+    #createPaginationUI() {
         const container = document.createElement('div');
         container.id = 'pagination-container';
         container.className = 'pagination-container';
@@ -78,7 +78,7 @@ export class PaginationService {
     }
 
     // Collega gli eventi
-    bindEvents() {
+    #bindEvents() {
         this.pageInfo = document.getElementById('pagination-info-text');
         this.prevBtn = document.getElementById('prev-page-btn');
         this.nextBtn = document.getElementById('next-page-btn');

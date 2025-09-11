@@ -1,12 +1,17 @@
 :root {
-    --primary-color: #007bff;
+    --primary-color: #ffffff;
+    --primary-table-color: #000000;
     --danger-color: #dc3545;
     --success-color: #28a745;
-    --text-color: #000000;
+    --text-color: #ffffff;
     --toolbar-text-color: #ffffff;
+    --text-color-stats-section: #0c0e41;
+    --text-color-filter-section: #0c0e41;
     --heading-color: #333333;
-    --background-header: #f8f9fa;
-    --background-body: #ffffff;
+    --background-header: #0c0e41;
+    --background-stats: #e6e6e6;
+    --background-table: #e6e6e6;
+    --background-body: #0c0e41;
     --background-footer: #f1f1f1;
     --border-color: #ddd;
     --border-focus-color: #007bff;
@@ -20,4 +25,5 @@
     --background-income: #d4edda;
     --background-edit-btn: #ecaa59;
     --background-delete-btn: #dc3545;
+    --background-filter-btn: #0c0e41;
 }

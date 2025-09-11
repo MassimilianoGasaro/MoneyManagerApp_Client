@@ -26,8 +26,6 @@
             <button class="btn add-expense-btn" id="add-expense-btn">💸 Aggiungi Uscita</button>
             <button class="btn add-income-btn" id="add-income-btn">💰 Aggiungi Entrata</button>
             <button class="btn delete-selected-btn" id="delete-selected-btn" style="display: none;">🗑️ Elimina Selezionati</button>
-            <button class="btn toggle-filters-btn" id="toggle-filters">🔍 Mostra Filtri</button>
-            <button class="btn toggle-pagination-btn" id="toggle-pagination">📄 Abilita Paginazione</button>
             <button class="btn export-btn" id="export-excel">📊 Esporta Excel</button>
             <button class="btn import-btn" id="import-excel">📂 Importa Excel</button>
             <button class="btn template-btn" id="download-template">📄 Scarica Template</button>
@@ -54,71 +52,79 @@
             </div>
         </div>
         
-        <!-- Sezione Filtri -->
-        <div class="filters-section collapsed" id="filters-section">
-            <div class="filters-content">
-                <h3>🔍 Filtri e Ricerca</h3>
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label for="search-input">Cerca:</label>
-                        <input type="text" id="search-input" placeholder="Cerca in titolo o descrizione...">
+        <div class="main-container">
+
+            <!-- Sezione Filtri -->
+            <div class="filters-section" id="filters-section">
+                <div class="filters-content">
+                    <h3>🔍 Filtri e Ricerca</h3>
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="search-input">Cerca:</label>
+                            <input type="text" id="search-input" placeholder="Cerca in titolo o descrizione...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="type-filter">Tipo:</label>
+                            <select id="type-filter">
+                                <option value="">Tutti i tipi</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="date-from">Data da:</label>
+                            <input type="date" id="date-from">
+                        </div>
+                        <div class="filter-group">
+                            <label for="date-to">Data a:</label>
+                            <input type="date" id="date-to">
+                        </div>
+                        <div class="filter-group">
+                            <label for="amount-min">Importo min:</label>
+                            <input type="number" id="amount-min" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="filter-group">
+                            <label for="amount-max">Importo max:</label>
+                            <input type="number" id="amount-max" step="0.01" placeholder="1000.00">
+                        </div>
                     </div>
-                    <div class="filter-group">
-                        <label for="type-filter">Tipo:</label>
-                        <select id="type-filter">
-                            <option value="">Tutti i tipi</option>
-                        </select>
+                    <div class="filters-actions">
+                        <button class="btn filter-btn" id="apply-filters">✅ Applica Filtri</button>
+                        <button class="btn clear-btn" id="clear-filters">🔄 Pulisci Filtri</button>
                     </div>
-                    <div class="filter-group">
-                        <label for="date-from">Data da:</label>
-                        <input type="date" id="date-from">
-                    </div>
-                    <div class="filter-group">
-                        <label for="date-to">Data a:</label>
-                        <input type="date" id="date-to">
-                    </div>
-                    <div class="filter-group">
-                        <label for="amount-min">Importo min:</label>
-                        <input type="number" id="amount-min" step="0.01" placeholder="0.00">
-                    </div>
-                    <div class="filter-group">
-                        <label for="amount-max">Importo max:</label>
-                        <input type="number" id="amount-max" step="0.01" placeholder="1000.00">
-                    </div>
-                </div>
-                <div class="filters-actions">
-                    <button class="btn filter-btn" id="apply-filters">✅ Applica Filtri</button>
-                    <button class="btn clear-btn" id="clear-filters">🔄 Pulisci Filtri</button>
                     <div class="results-info" id="results-info"></div>
                 </div>
             </div>
+            
+            <div class="table-section">
+                <div class="table-container">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column">
+                                    <input type="checkbox" id="select-all-checkbox" title="Seleziona tutto">
+                                </th>
+                                <th class="sortable" data-column="title">
+                                    Nome <span class="sort-indicator">⇅</span>
+                                </th>
+                                <th class="sortable" data-column="amount">
+                                    Importo <span class="sort-indicator">⇅</span>
+                                </th>
+                                <th class="sortable" data-column="date">
+                                    Data <span class="sort-indicator">⇅</span>
+                                </th>
+                                <th class="sortable" data-column="type">
+                                    Tipologia <span class="sort-indicator">⇅</span>
+                                </th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- popolato dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
         </div>
-        
-        <table class="styled-table">
-            <thead>
-                <tr>
-                    <th class="checkbox-column">
-                        <input type="checkbox" id="select-all-checkbox" title="Seleziona tutto">
-                    </th>
-                    <th class="sortable" data-column="title">
-                        Titolo <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="amount">
-                        Valore <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="date">
-                        Data <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="type">
-                        Tipo <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- popolato dinamicamente -->
-            </tbody>
-        </table>
 
         <!-- Container per la versione mobile -->
         <div id="mobile-table-container" class="mobile-table">
