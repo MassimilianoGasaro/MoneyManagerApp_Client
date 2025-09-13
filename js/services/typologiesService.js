@@ -1,4 +1,5 @@
 import { ApiService } from "./apiService.js";
+import httpInterceptor from "../interceptors/httpInterceptor.js";
 
 class TypologiesService extends ApiService {
   constructor() {
@@ -9,12 +10,11 @@ class TypologiesService extends ApiService {
     console.log("Recupero tipologie");
         try {
 
-            const response = await fetch(`${this.endpoint}/all`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
+            const response = await httpInterceptor.get(`${this.endpoint}/all`, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Caricamento tipologie...',
+                timeout: 15000
             });
 
             return await response.json();
@@ -29,12 +29,11 @@ class TypologiesService extends ApiService {
   async getExpenseTypologies() {
     console.log("Recupero tipologie di spesa");
     try {
-        const response = await fetch(`${this.endpoint}?type=expense`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
+        const response = await httpInterceptor.get(`${this.endpoint}?type=expense`, {
+            showLoading: true,
+            showToast: true,
+            loadingText: 'Caricamento tipologie...',
+            timeout: 15000
         });
 
         return await response.json();
@@ -49,12 +48,11 @@ class TypologiesService extends ApiService {
   async getIncomeTypologies() {
     console.log("Recupero tipologie di entrata");
     try {
-        const response = await fetch(`${this.endpoint}?type=income`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
+        const response = await httpInterceptor.get(`${this.endpoint}?type=income`, {
+            showLoading: true,
+            showToast: true,
+            loadingText: 'Caricamento tipologie...',
+            timeout: 15000
         });
 
         return await response.json();
