@@ -1,4 +1,5 @@
 import { ApiService } from './apiService.js';
+import httpInterceptor from '../interceptors/httpInterceptor.js';
 
 class AuthService extends ApiService {
     #apiUrl = null;
@@ -11,12 +12,11 @@ class AuthService extends ApiService {
     async login(body) {
         // logica di login
         try {
-            const response = await fetch(`${this.#apiUrl}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
+            const response = await httpInterceptor.post(`${this.#apiUrl}/login`, body, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Login in corso...',
+                timeout: 15000
             });
             
             // Leggi il JSON una sola volta
@@ -30,26 +30,26 @@ class AuthService extends ApiService {
             return res;
         } catch (error) {
             console.error('Errore durante il login:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error; 
         }
     }
 
     async register(body) {
         // logica di register
         try {
-            const response = await fetch(`${this.#apiUrl}/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
+            const response = await httpInterceptor.post(`${this.#apiUrl}/register`, body, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Registrazione in corso...',
+                timeout: 15000
             });
             
             const res = await response.json();
+
             return res;
         } catch (error) {
             console.error('Errore durante la registrazione:', error);
-            throw error; // Rilancia l'errore per gestirlo nel chiamante
+            throw error; 
         }
     }
 
@@ -57,12 +57,11 @@ class AuthService extends ApiService {
         // logica di logout
         try {
             // Opzionale: chiamata al server per logout
-            const response = await fetch(`${this.#apiUrl}/logout`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
+            const response = await httpInterceptor.post(`${this.#apiUrl}/logout`, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Logout in corso...',
+                timeout: 15000
             });
             
             return response.json();
