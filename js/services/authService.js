@@ -56,7 +56,6 @@ class AuthService extends ApiService {
     async logout() {
         // logica di logout
         try {
-            // Opzionale: chiamata al server per logout
             const response = await httpInterceptor.post(`${this.#apiUrl}/logout`, {
                 showLoading: true,
                 showToast: true,
@@ -67,7 +66,7 @@ class AuthService extends ApiService {
             return response.json();
 
         } catch (error) {
-            console.error('Errore durante il logout:', error);
+            console.error('Errore durante il logout:', error.message);
             throw error;
         }
     }

@@ -2,6 +2,80 @@ import { getHeaderAndFooter } from "./shared/header.js";
 import usersFunctions from "./services/authService.js";
 import toast from "./shared/toast.js";
 
+// Funzione per il toggle della visibilità della pwd
+function initializePasswordToggles() {
+    // Trova tutti i bottoni per toggle password
+    const toggleButtons = document.querySelectorAll('.password-toggle');
+    
+    toggleButtons.forEach(button => {
+        // Inizializza stato
+        button.setAttribute('data-visible', 'false');
+        
+        // Aggiungi event listener
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            togglePasswordVisibility(button);
+        });
+        
+        // Gestisci accessibilità
+        button.setAttribute('aria-label', 'Mostra password');
+        button.setAttribute('tabindex', '0');
+        
+        // Keyboard support
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                togglePasswordVisibility(button);
+            }
+        });
+    });
+}
+
+function togglePasswordVisibility(toggleButton) {
+    const targetId = toggleButton.getAttribute('data-target');
+    const passwordInput = document.getElementById(targetId);
+    const isCurrentlyVisible = toggleButton.getAttribute('data-visible') === 'true';
+    
+    if (!passwordInput) {
+        console.error(`Password input with id "${targetId}" not found`);
+        return;
+    }
+
+    if (isCurrentlyVisible) {
+        // Nascondi password
+        passwordInput.type = 'password';
+        toggleButton.setAttribute('data-visible', 'false');
+        toggleButton.setAttribute('aria-label', 'Mostra password');
+        toggleButton.title = 'Mostra password';
+    } else {
+        // Mostra password
+        passwordInput.type = 'text';
+        toggleButton.setAttribute('data-visible', 'true');
+        toggleButton.setAttribute('aria-label', 'Nascondi password');
+        toggleButton.title = 'Nascondi password';
+    }
+
+    // Mantieni il focus sull'input se era attivo
+    if (document.activeElement === passwordInput) {
+        passwordInput.focus();
+    }
+}
+
+// Metodo per resettare tutti i toggle (utile per tab switching)
+function resetAllToggles() {
+    const toggleButtons = document.querySelectorAll('.password-toggle');
+    toggleButtons.forEach(button => {
+        const targetId = button.getAttribute('data-target');
+        const passwordInput = document.getElementById(targetId);
+        
+        if (passwordInput) {
+            passwordInput.type = 'password';
+            button.setAttribute('data-visible', 'false');
+            button.setAttribute('aria-label', 'Mostra password');
+        }
+    });
+}
+
 // Funzione per gestire il login
 async function handleLogin(event) {
     event.preventDefault();
@@ -49,13 +123,6 @@ async function handleRegister(event) {
             surname: surname
         }
 
-        // {
-        //     email: "massi@test.com",
-        //     password: "Test123!!",
-        //     name: "max",
-        //     surname: "gasaro"
-        // }
-        
         const response = await usersFunctions.register(body);
 
         if (response.success) {
@@ -111,6 +178,9 @@ function initLogin() {
             switchTab(tabName);
         });
     });
+
+    initializePasswordToggles();
+    resetAllToggles();
 }
 
 // Avvia l'applicazione quando il DOM è pronto

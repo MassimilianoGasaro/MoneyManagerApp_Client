@@ -8,16 +8,18 @@ async function handleLogout(e) {
     try {
         const response = await authService.logout();
         if (response.success) {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user_id');
-            toast.success('Logout effettuato con successo!', 2000, () => authManager.redirectToLogin());
+            toast.success('Logout effettuato con successo!');
         } else {
             toast.error(`Errore durante il logout: ${response.message}`);
         }
     } catch (error) {
         console.error('Errore durante il logout:', error);
         toast.error('Errore durante il logout');
-    };
+    } finally {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user_id');
+        setTimeout(() => { authManager.redirectToLogin(); }, 2000);
+    }
 
 }
 
