@@ -1,4 +1,11 @@
 @import url("global.css");
+@import url("variables.css");
+
+/* MAIN */
+main {
+    /* background-color: var(--background-body); */
+    padding: 2rem 0;
+}
 
 /* Stili per i tab */
 .tab-navigation {
@@ -48,7 +55,7 @@
 /* Stili esistenti per il form */
 .login-container {
     max-width: 400px;
-    margin: 2rem auto;
+    margin: 0 auto;
     padding: 2rem;
     border: 1px solid #ddd;
     border-radius: 8px;

@@ -2,14 +2,12 @@
 @import url("variables.css");
 
 header {
-    background-color: var(--background-header);
     color: var(--text-color);
     padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     height: 70px;
 }
 

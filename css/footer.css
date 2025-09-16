@@ -2,11 +2,9 @@
 @import url("variables.css");
 
 .modern-footer {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 3rem 0 1rem 0;
     margin-top: auto;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .footer-container {
@@ -185,17 +183,4 @@
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-/* Effetto hover per l'intero footer */
-.modern-footer:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-    background-size: 200% 200%;
-    animation: gradientShift 3s ease infinite;
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
