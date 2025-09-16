@@ -276,8 +276,9 @@
     <div id="footer"></div>
 
     <!-- SheetJS per Excel Import/Export -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js" async></script>
 
-    <script src="./js/main.js" type="module" defer></script>
+    <!-- type module applica automaticamente attributo defer (lo script viene eseguito dopo il parsing del html) -->
+    <script src="./js/main.js" type="module"></script>
 </body>
 </html>

@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="./css/reports.css">
     <title>Gestione Spese - Reports</title>
     <!-- Chart.js per i grafici -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- attributo async perchè è uno script indipendente -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" async></script>
     <!-- Route Guard Script -->
     <script type="module">
         import { initRouteGuard } from './js/middlewares/route-guard.js';
@@ -164,6 +165,7 @@
 
     <!-- Footer -->
     <div id="footer"></div>
-    <script src="./js/reports.js" type="module" defer></script>
+    <!-- type module applica automaticamente attributo defer (lo script viene eseguito dopo il parsing del html) -->
+    <script src="./js/reports.js" type="module"></script>
 </body>
 </html>
