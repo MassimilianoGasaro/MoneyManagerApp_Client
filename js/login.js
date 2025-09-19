@@ -1,6 +1,7 @@
 import { getHeaderAndFooter } from "./shared/header.js";
 import usersFunctions from "./services/authService.js";
 import toast from "./shared/toast.js";
+import authManager from "./shared/auth.js";
 
 // Funzione per il toggle della visibilità della pwd
 function initializePasswordToggles() {
@@ -156,6 +157,38 @@ function switchTab(tabName) {
     document.getElementById(`${tabName}-tab`).classList.add('active');
 }
 
+// Funzione per reset pwd
+async function handleResetPwd(event) {
+    event.preventDefault();
+    
+    try {
+
+        const email = document.getElementById('reset-email').value;
+    
+        if (!email) {
+            toast.error("Email non inserita correttamente");
+            return;
+        } 
+
+        const body = {
+            email: email,
+        }
+
+        const response = await usersFunctions.resetPwd(body);
+
+        if (response.success) {
+            toast.success('Reset avviato con successo! Controlla la casella di posta');
+            authManager.redirectToLogin();
+        } else {
+            toast.error(response.message || 'Errore durante la registrazione');
+        }
+
+    } catch (error) {
+
+    }
+
+}
+
 // Inizializzazione della pagina login
 function initLogin() {
     // Carica header e footer
@@ -164,12 +197,26 @@ function initLogin() {
     // Aggiungi event listener ai form
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
+    const resetForm = document.getElementById('reset-form');
+
+    // container
+    const loginContainer = document.getElementById('login-container');
+    const resetContainer = document.getElementById('reset-container');
     
-    if (loginForm) 
+    if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+        const forgetPwd = document.getElementById('forget-pwd');
+        if (forgetPwd) forgetPwd.addEventListener('click', () => {
+            loginContainer.style.display = "none";
+            resetContainer.style.display = "block";
+        });
+    }
     
     if (registerForm) 
         registerForm.addEventListener('submit', handleRegister);
+
+    if (resetForm)
+        resetForm.addEventListener('submit', handleResetPwd);
     
     // Aggiungi event listener ai tab
     document.querySelectorAll('.tab-btn').forEach(btn => {

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/reset-pwd.css">
+    <title>Reset Password - Gestione Spese</title>
+</head>
+<body>
+    <!-- Header -->
+    <div id="header"></div>
+
+    <!-- Contenuto principale (nascosto inizialmente) -->
+    <div id="main-content" class="main-content hidden">
+
+        <!-- Main -->
+        <main>
+            <!-- Token Error -->
+            <div id="token-error" class="error-container hidden">
+                <div class="error-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Token Non Valido</h2>
+                    <p id="error-message">Il link per il reset della password non è valido o è scaduto.</p>
+                    <button class="btn back-btn" id="back-btn">Torna al Login</button>
+                </div>
+            </div>
+
+            <!-- Reset Form -->
+            <div id="reset-container" class="reset-container hidden">
+                <div class="form-header">
+                    <h1>Reset Password</h1>
+                    <p>Inserisci la tua nuova password</p>
+                </div>
+
+                <form id="reset-form">
+                    <div class="form-group">
+                        <label for="reset-password">Nuova Password:</label>
+                        <div class="password-input-container">
+                            <input type="password" id="reset-password" required minlength="8">
+                            <button type="button" class="password-toggle" data-target="reset-password">
+                                <i class="fas fa-eye password-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-confirm-password">Conferma Nuova Password:</label>
+                        <div class="password-input-container">
+                            <input type="password" id="reset-confirm-password" required minlength="8">
+                            <button type="button" class="password-toggle" data-target="reset-confirm-password">
+                                <i class="fas fa-eye password-icon"></i>
+                            </button>
+                        </div>
+                        <div class="password-match" id="password-match"></div>
+                    </div>
+                    <button type="submit" class="btn reset-btn" id="submit-btn" disabled>Conferma Reset</button>
+                </form>
+            </div>
+
+            <!-- Success Message -->
+            <div id="success-container" class="success-container hidden">
+                <div class="success-content">
+                    <i class="fas fa-check-circle"></i>
+                    <h2>Password Aggiornata!</h2>
+                    <p>La tua password è stata aggiornata con successo.</p>
+                    <a href="/login.html" class="btn login-btn">Accedi ora</a>
+                </div>
+            </div>
+        </main>
+
+    </div>
+    
+    <!-- Footer -->
+    <div id="footer"></div>
+    
+    <!-- ✅ Script principale gestisce tutto -->
+    <script src="./js/reset-pwd.js" type="module"></script>
+</body>
+</html>

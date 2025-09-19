@@ -67,8 +67,7 @@ class HttpInterceptor {
                     return { success: false, error: 'BAD_REQUEST', message: 'Richiesta non valida' };
                 
                 case 401:
-                    if (showToast) toast.error('❌ Sessione scaduta');
-                    authManager.logout();
+                    if (showToast) toast.error('❌ Non autorizzato');
                     return { success: false, error: 'UNAUTHORIZED', message: 'Sessione scaduta' };
                 
                 case 403:
@@ -149,9 +148,10 @@ class HttpInterceptor {
 
             // Controlla se la risposta è ok
             if (!response.ok) {
-                const error = new Error(`HTTP ${response.status}`);
-                error.status = response.status;
-                error.statusText = response.statusText;
+                let error = {
+                    status: response.status,
+                    statusText: response.statusText,
+                }
                 throw error;
             }
 

@@ -1,5 +1,8 @@
 // Route Guard per proteggere le pagine
+import httpInterceptor from '../interceptors/httpInterceptor.js';
+import authService from '../services/authService.js';
 import authManager from '../shared/auth.js';
+import toast from '../shared/toast.js';
 
 // Lista delle pagine protette
 const protectedPages = [

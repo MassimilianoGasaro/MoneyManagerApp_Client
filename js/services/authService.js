@@ -56,17 +56,53 @@ class AuthService extends ApiService {
     async logout() {
         // logica di logout
         try {
-            const response = await httpInterceptor.post(`${this.#apiUrl}/logout`, {
+            const response = await httpInterceptor.post(`${this.#apiUrl}/logout`, {}, {
                 showLoading: true,
                 showToast: true,
                 loadingText: 'Logout in corso...',
                 timeout: 15000
             });
             
-            return response.json();
+            return await response.json();
 
         } catch (error) {
             console.error('Errore durante il logout:', error.message);
+            throw error;
+        }
+    }
+
+    async resetPwd(body) {
+        // logica reset pwd
+        try {
+            const response = await httpInterceptor.post(`${this.#apiUrl}/forgot-password`, body, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Reset in corso...',
+                timeout: 15000,
+                //customErrorHandler: (error) => { console.log(error); }
+            });
+            
+            if (response.success) return await response.json();
+            else throw new Error(response.message);
+        } catch (error) {
+            console.error('Errore durante il reset:', error.message);
+            throw error;
+        }
+    }
+
+    async checkValidityTokenForReset(token) {
+        try {
+            const response = await httpInterceptor.get(`${this.#apiUrl}/validate-reset-token/${token}`, {
+                showLoading: true,
+                showToast: true,
+                loadingText: 'Check token in corso...',
+                timeout: 15000
+            });
+            
+            return response.json();
+
+        } catch (error) {
+            console.error('Errore durante il check del token:', error);
             throw error;
         }
     }
