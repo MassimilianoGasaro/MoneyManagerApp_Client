@@ -67,7 +67,7 @@ class HttpInterceptor {
                     return { success: false, error: 'BAD_REQUEST', message: 'Richiesta non valida' };
                 
                 case 401:
-                    if (showToast) toast.error('❌ Non autorizzato');
+                    if (showToast) toast.error('Credenziali errate!');
                     return { success: false, error: 'UNAUTHORIZED', message: 'Sessione scaduta' };
                 
                 case 403:

@@ -19,12 +19,10 @@ class AuthService extends ApiService {
                 timeout: 15000
             });
             
-            // Leggi il JSON una sola volta
-            const res = await response.json();
-            
             if (response.ok) {
                 localStorage.setItem('authToken', res.data.token);
                 localStorage.setItem('user_id', res.data.user.id);
+                const res = await response.json();
             }
             
             return res;

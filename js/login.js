@@ -97,13 +97,10 @@ async function handleLogin(event) {
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
-        } else {
-            toast.error(errorData.message || 'Credenziali non valide');
-        }
+        } 
 
     } catch (error) {
         console.error('Errore durante il login:', error);
-        toast.error('Errore di connessione al server');
     }
 }
 
